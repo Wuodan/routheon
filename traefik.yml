@@ -1,0 +1,8 @@
+entryPoints:
+  llama-servers:
+    address: ":8080"
+
+providers:
+  file:
+    directory: /etc/traefik/mappings/
+    watch: true
