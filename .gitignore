@@ -1,0 +1,10 @@
+/.idea
+/.venv/
+__pycache__/
+/artifacts
+dist/
+/node_modules/
+
+.roomodes
+# may contain API-keys
+.roo/mcp.json
