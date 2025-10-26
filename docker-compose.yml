@@ -17,6 +17,13 @@ services:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/mappings/:/etc/traefik/mappings/:ro
 
+  all-models:
+    pull_policy: build
+    build:
+      context: traefik/all-models/
+    volumes:
+      - ./traefik/mappings/:/etc/traefik/mappings/:ro
+
   llama-server-1:
     image: ghcr.io/ggml-org/llama.cpp:server
     healthcheck:
