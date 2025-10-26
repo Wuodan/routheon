@@ -16,6 +16,7 @@ services:
     volumes:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/mappings/:/etc/traefik/mappings/:ro
+      - /tmp/log/traefik/:/tmp/log/traefik/
 
   all-models:
     pull_policy: build

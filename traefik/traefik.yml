@@ -6,3 +6,6 @@ providers:
   file:
     directory: /etc/traefik/mappings/
     watch: true
+
+accessLog:
+  filePath: /tmp/log/traefik/access.log

@@ -64,9 +64,11 @@ docker compose ps
 
 #### Clean-up after Test
 
-The models are stored in a Docker volume. When you are done testing, delete the volume with:
+The models are stored in a Docker volume. When you are done testing, delete images and the volume with:
 
 ```bash
+docker compose down
+docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim
 docker volume rm routheon_llama_cpp
 ```
 
