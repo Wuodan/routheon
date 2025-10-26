@@ -1,12 +1,12 @@
 http:
   routers:
     llama-server-1:
-      rule: "HeaderRegexp(`Authorization`, `Bearer API_KEY-1`)"
+      rule: "HeaderRegexp(`Authorization`, `^Bearer (API_KEY-1)$`)"
       service: llama-server-1
       entryPoints:
         - llama-servers
     llama-server-2:
-      rule: "HeaderRegexp(`Authorization`, `Bearer API_KEY-2`)"
+      rule: "HeaderRegexp(`Authorization`, `^Bearer (API_KEY-2)$`)"
       service: llama-server-2
       entryPoints:
         - llama-servers
