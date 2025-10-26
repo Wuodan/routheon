@@ -3,6 +3,7 @@
 # Starts a proxy on host port 8080 plus 2 llama.cpp servers
 # Routing is based on API_KEY (OpenAI compatible)
 services:
+
   traefik-proxy:
     image: traefik:latest
     depends_on:
@@ -10,9 +11,6 @@ services:
         condition: service_healthy
       llama-server-2:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "traefik", "healthcheck"]
-      start_period: 10m
     ports:
       - "8080:8080"
     volumes:

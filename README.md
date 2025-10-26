@@ -55,7 +55,12 @@ cd routheon
 docker-compose up -d
 ```
 
-Wait for all services to be up and running. The models must be downloaded before the services are fully operational.
+Wait for all `llama-server` services to be `healthy`. The models must be downloaded before the services are fully operational.
+
+To check status, run:
+```bash
+docker compose ps
+```
 
 #### Clean-up after Test
 
@@ -117,10 +122,10 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 Copy [`traefik.yml`](traefik/traefik.yml) to `/etc/traefik/traefik.yml`  
 Adapt the port to your needs.
 
-#### Traefik Config: `mappings.yml`
+#### Traefik Config: Mappings API_KEY to llama.cpp instance
 
-- Copy [`mappings.yml`](traefik/mappings/mappings.yml) to `/etc/traefik/mappings/`
-- For each `llama.cpp` instance, create a `llama-server-N` (N = instance number)
+- Create mappings in `/etc/traefik/mappings/`
+- For each `llama.cpp` instance, create a `my-server.yml` file like [llama-server-1.yml](traefik/mappings/llama-server-1.yml)
 - The `url` must be `http://127.0.0.1:<LLAMA_PORT>`
 
 #### Traefik Service
