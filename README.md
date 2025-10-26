@@ -114,12 +114,12 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 
 #### Traefik Config: `traefik.yml`
 
-Copy [`traefik.yml`](traefik.yml) to `/etc/traefik/traefik.yml`  
+Copy [`traefik.yml`](traefik/traefik.yml) to `/etc/traefik/traefik.yml`  
 Adapt the port to your needs.
 
 #### Traefik Config: `mappings.yml`
 
-- Copy [`mappings.yml`](mappings/mappings.yml) to `/etc/traefik/mappings/`
+- Copy [`mappings.yml`](traefik/mappings/mappings.yml) to `/etc/traefik/mappings/`
 - For each `llama.cpp` instance, create a `llama-server-N` (N = instance number)
 - The `url` must be `http://127.0.0.1:<LLAMA_PORT>`
 
