@@ -19,7 +19,8 @@ services:
       - /tmp/log/traefik/:/tmp/log/traefik/
 
   all-models:
-    pull_policy: build
+    # for development
+    # pull_policy: build
     build:
       context: traefik/all-models/
     volumes:

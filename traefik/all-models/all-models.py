@@ -154,7 +154,7 @@ def main() -> None:
                         help="Directory containing Traefik mapping files")
     parser.add_argument("--host",
                         default="127.0.0.1",
-                        help="Host to bind the HTTP server to (e.g. 0.0.0.0)")
+                        help="Host to bind the HTTP server to (e.g. 127.0.0.1)")
     parser.add_argument("--port",
                         type=int,
                         default=9080,
