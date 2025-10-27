@@ -7,14 +7,25 @@ Licensed under Apache License 2.0.
 See: https://github.com/Wuodan/routheon
 """
 
+import argparse
+import json
+import logging
 import os
 import re
-import json
-import yaml
+import urllib.error
 import urllib.request
-import argparse
-from typing import List, Dict, Any, Optional
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import List, Dict, Any, Optional
+
+import yaml
+
+
+def configure_logging(level: str):
+    """Configure logging based on the provided level."""
+    numeric_level = getattr(logging, level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f'Invalid log level: {level}')
+    logging.basicConfig(level=numeric_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def urls_from_mapping(path: str) -> List[str]:
@@ -27,7 +38,11 @@ def urls_from_mapping(path: str) -> List[str]:
             for s in y["http"]["services"].values()
             for s in s["loadBalancer"]["servers"]
         ]
-    except Exception:
+    except KeyError as e:
+        logging.error(f"KeyError in urls_from_mapping: {e}")
+        return []
+    except Exception as e:
+        logging.error(f"Unexpected error in urls_from_mapping: {e}")
         return []
 
 
@@ -43,7 +58,14 @@ def fetch_models_payload(url: str, mapping_timeout: int) -> Dict[str, Any]:
     try:
         with urllib.request.urlopen(f"{url}/v1/models", timeout=mapping_timeout) as r:
             return json.load(r)
-    except Exception:
+    except urllib.error.URLError as e:
+        logging.info(f"URL not available, server probably down. Received URLError in fetch_models_payload: {e}")
+        return {}
+    except json.JSONDecodeError as e:
+        logging.error(f"JSONDecodeError in fetch_models_payload: {e}")
+        return {}
+    except Exception as e:
+        logging.error(f"Unexpected error in fetch_models_payload: {e}")
         return {}
 
 
@@ -90,8 +112,10 @@ def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
                 mid = d.get("id")
                 if mid and mid not in data_map:
                     data_map[mid] = d
-        except Exception:
-            pass
+        except KeyError as e:
+            logging.error(f"KeyError in aggregate_all while processing data: {e}")
+        except Exception as e:
+            logging.error(f"Unexpected error in aggregate_all while processing data: {e}")
 
         # merge models[]
         try:
@@ -99,8 +123,10 @@ def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
                 mid = normalize_model_id(m)
                 if mid and mid not in models_map:
                     models_map[mid] = m
-        except Exception:
-            pass
+        except KeyError as e:
+            logging.error(f"KeyError in aggregate_all while processing models: {e}")
+        except Exception as e:
+            logging.error(f"Unexpected error in aggregate_all while processing models: {e}")
 
     # align indexes
     all_ids = sorted(set(data_map.keys()) | set(models_map.keys()))
@@ -167,7 +193,13 @@ def main() -> None:
                         type=int,
                         default=2,
                         help="Timeout in seconds for a request to a mapping")
+    parser.add_argument("--log-level",
+                        default="WARNING",
+                        help="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     args = parser.parse_args()
+
+    # Configure logging
+    configure_logging(args.log_level)
 
     # Set class attributes on OneShotHandler so instances can access them
     OneShotHandler.mappings = args.mappings
