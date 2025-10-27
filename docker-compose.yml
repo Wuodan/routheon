@@ -61,14 +61,18 @@ services:
     depends_on:
       - all-models
     volumes:
-      - ./traefik/create-mapping/create-mapping.py.py:/usr/local/bin/create-mapping.py:ro
+      - ./traefik/create-mapping/create-mapping.sh:/usr/local/bin/create-mapping.sh:ro
       - ./traefik/mappings/:/etc/traefik/mappings/
-      # simulate create-mapping.py for 2nd llama-server
+      # simulate create-mapping.sh for 2nd llama-server
       # then start all-models.py
       # --host llama-server-2: is the name of the docker-compose service here
       # --host 0.0.0.0: is needed here when insise docker compose as traefik is in another service
-    command: |
-       python /usr/local/bin/create-mapping.py 8012 llama-server-2 API_KEY-2 --mappings /etc/traefik/mappings --host http://llama-server-2
+    command:
+      - /bin/sh
+      - -c
+      - |
+        rm -f /etc/traefik/mappings/llama-server-2.yml
+        /usr/local/bin/create-mapping.sh --port 8012 --service llama-server-2 --api_key API_KEY-2 --mappings /etc/traefik/mappings --host http://llama-server-2
 
 volumes:
   llama_cpp:

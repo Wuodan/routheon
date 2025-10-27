@@ -104,6 +104,11 @@ The models are stored in a Docker volume. When you are done testing, delete imag
 ```bash
 docker compose down
 docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_all-models:latest
+```
+
+Remove the volume with the models:
+
+```bash
 docker volume rm routheon_llama_cpp
 ```
 
@@ -183,12 +188,13 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 
 - Traefik
 - llama.cpp: one or several instances of `llama-server` with dedicated ports
+- Python: if you want the [Optional Model Summary Service](#optional-model-summary-service)
 
 ### Installation
 
 #### Traefik Config: `traefik.yml`
 
-1. Copy [`traefik.yml`](traefik/traefik.yml) to `/etc/traefik/traefik.yml`
+1. Copy [`traefik/traefik.yml`](traefik/traefik.yml) to `/etc/traefik/traefik.yml`
 2. Adapt the port to your needs.
 3. Adjust logging (`accessLog`) settings as needed.
 
@@ -199,20 +205,23 @@ Here you have 2 choices:
 - Dynamic Auto-Mapping: Let mappings be created/updated when `llama-server` starts
 - Manual Mapping: Manage the mapping files manually
 
-##### Dynamic Auto-Mapping with `create-mappings.py`
+##### Dynamic Auto-Mapping with `create-mapping.sh`
 
-Change your system daemon for `llama-server` to call [create-mappings.py](traefik/create-mapping/create-mapping.py).
+Change your system daemon for `llama-server` to call [create-mapping.sh](traefik/create-mapping/create-mapping.sh).
 
 Example:
 
 ```bash
-~/.routheon/venv/bin/python \
-  ~/.routheon/create-mappings.py 8011 TinyLlama_Q2 'my-api-key' && \
-\
-llama-server \
-  --hf-repo TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF:Q2_K \
+.usr/local/bin/create-mapping.sh \
   --port 8011 \
-  --alias TinyLlama_Q2
+  --service TinyLlama_Q2 \
+  --api_key 'my-api-key'
+
+exec \
+  llama-server \
+      --hf-repo TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF:Q2_K \
+      --port 8011 \
+      --alias TinyLlama_Q2
 ```
 
 > This uses defaults for the mapping folder and the host, use `--mappings` and `--host` to set them.
