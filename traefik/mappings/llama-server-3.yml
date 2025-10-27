@@ -1,0 +1,15 @@
+# This file has same API_KEY as the llama-server-2
+# During tests this file will be archived when the mapping for llama-server-2 is created
+http:
+  routers:
+    llama-server-3:
+      rule: "HeaderRegexp(`Authorization`, `^Bearer API_KEY-2$`)"
+      service: llama-server-3
+      entryPoints:
+        - llama-servers
+
+  services:
+    llama-server-3:
+      loadBalancer:
+        servers:
+          - url: "http://llama-server-3:9999"

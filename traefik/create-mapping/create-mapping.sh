@@ -47,21 +47,36 @@ if [ -z "$PORT" ] || [ -z "$SERVICE" ] || [ -z "$API_KEY" ]; then
     usage
 fi
 
+echo "Creating mapping file '$MAPPINGS/${SERVICE}.yml' for Traefik service '$SERVICE' on '$HOST:$PORT'"
+
+if [ ! -d "$MAPPINGS" ]; then
+    >&2 echo "Error: Mapping directory does not exist at $MAPPINGS"
+    exit 1
+fi
+
 # Rotate old mappings that use the same API key
 # - only .yml / .yaml
 # - skip the file we're about to create (${SERVICE}.yml)
 timestamp="$(date +%Y%m%d-%H%M%S)"
-if [ -d "$MAPPINGS" ]; then
+MATCHED_FILES="$(
     grep -rl \
         --include="*.yml" \
         --include="*.yaml" \
         --exclude="${SERVICE}.yml" \
-        -- "^Bearer ${API_KEY}$" "$MAPPINGS" 2>/dev/null |
-    while IFS= read -r match_file; do
+        "\^Bearer ${API_KEY}\\$" "$MAPPINGS" || true
+        # need '\\$' in above regex !!
+)"
+if [ -n "$MATCHED_FILES" ]; then
+    echo "Rotating these other mapping files with same API_KEY:"
+    echo "$MATCHED_FILES"
+    echo "$MATCHED_FILES" | while IFS= read -r match_file; do
         new_name="${match_file}.bak.${timestamp}"
-        mv -- "$match_file" "$new_name"
+        mv "$match_file" "$new_name"
         echo "Rotated $match_file -> $new_name"
     done
+    echo "Done rotating"
+else
+    echo "Good - API_KEY not found in any other mapping files."
 fi
 
 TEMPLATE="http:

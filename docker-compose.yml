@@ -72,7 +72,7 @@ services:
       - /bin/sh
       - -c
       - |
-        rm -f /etc/traefik/mappings/llama-server-2.yml
+        rm -f /etc/traefik/mappings/llama-server-2.yml &&
         /usr/local/bin/create-mapping.sh --port 8012 --service llama-server-2 --api_key API_KEY-2 --mappings /etc/traefik/mappings --host http://llama-server-2
 
 volumes:

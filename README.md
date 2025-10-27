@@ -50,9 +50,9 @@ This feature is optional and requires a small companion service.
         ▲                         ▲               └────────────────────────┘
         │                         │                             ▲
         │                         │                             │
-        │                         │                    /v1/models (no API_KEY)
-        │                         │
-        └────────────── /v1/chat/completions, /v1/models (with API_KEY)
+     with API_KEY: /v1/chat/completions, ...                    |
+                                                                |
+                                                  without API_KEY: /v1/models 
 ```
 
 The diagram above illustrates how Routheon routes incoming requests.  
@@ -187,7 +187,8 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 ### Prerequisites
 
 - Install [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/)
-- Install [llama.cpp](https://github.com/ggml-org/llama.cpp#quick-start) to have one or several instances of `llama-server` with dedicated ports
+- Install [llama.cpp](https://github.com/ggml-org/llama.cpp#quick-start) to have one or several instances of
+  `llama-server` with dedicated ports
 - Python: if you want the [Optional Model Summary Service](#optional-model-summary-service)
 
 ### Installation
