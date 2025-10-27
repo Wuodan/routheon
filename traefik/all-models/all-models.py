@@ -14,6 +14,7 @@ import os
 import re
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import List, Dict, Any, Optional
 
@@ -86,7 +87,7 @@ def normalize_model_id(m: Any) -> Optional[str]:
 def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
     """
     1. read all traefik mapping files
-    2. call /v1/models on each backend
+    2. call /v1/models on each backend in parallel
     3. merge all results:
        data_map[id]   (from .data[].id)
        models_map[id] (from .models[].model / .name)
@@ -96,37 +97,40 @@ def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
     data_map = {}
     models_map = {}
 
-    for u in urls:
-        # don't let one dead backend kill the loop
-        try:
-            payload = fetch_models_payload(u, mapping_timeout)
-        except Exception:
-            continue
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(fetch_models_payload, u, mapping_timeout): u for u in urls}
+        for future in futures:
+            u = futures[future]
+            try:
+                payload = future.result()
+            except Exception as e:
+                logging.error(f"Error fetching models from {u}: {e}")
+                continue
 
-        if not payload:
-            continue
+            if not payload:
+                continue
 
-        # merge data[]
-        try:
-            for d in payload.get("data", []):
-                mid = d.get("id")
-                if mid and mid not in data_map:
-                    data_map[mid] = d
-        except KeyError as e:
-            logging.error(f"KeyError in aggregate_all while processing data: {e}")
-        except Exception as e:
-            logging.error(f"Unexpected error in aggregate_all while processing data: {e}")
+            # merge data[]
+            try:
+                for d in payload.get("data", []):
+                    mid = d.get("id")
+                    if mid and mid not in data_map:
+                        data_map[mid] = d
+            except KeyError as e:
+                logging.error(f"KeyError in aggregate_all while processing data from {u}: {e}")
+            except Exception as e:
+                logging.error(f"Unexpected error in aggregate_all while processing data from {u}: {e}")
 
-        # merge models[]
-        try:
-            for m in payload.get("models", []):
-                mid = normalize_model_id(m)
-                if mid and mid not in models_map:
-                    models_map[mid] = m
-        except KeyError as e:
-            logging.error(f"KeyError in aggregate_all while processing models: {e}")
-        except Exception as e:
-            logging.error(f"Unexpected error in aggregate_all while processing models: {e}")
+            # merge models[]
+            try:
+                for m in payload.get("models", []):
+                    mid = normalize_model_id(m)
+                    if mid and mid not in models_map:
+                        models_map[mid] = m
+            except KeyError as e:
+                logging.error(f"KeyError in aggregate_all while processing models from {u}: {e}")
+            except Exception as e:
+                logging.error(f"Unexpected error in aggregate_all while processing models from {u}: {e}")
 
     # align indexes
     all_ids = sorted(set(data_map.keys()) | set(models_map.keys()))
