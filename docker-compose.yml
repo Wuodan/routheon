@@ -61,7 +61,7 @@ services:
     depends_on:
       - all-models
     volumes:
-      - ./traefik/all-models/create-mapping.py:/usr/local/bin/create-mapping.py:ro
+      - ./traefik/create-mapping/create-mapping.py.py:/usr/local/bin/create-mapping.py:ro
       - ./traefik/mappings/:/etc/traefik/mappings/
       # simulate create-mapping.py for 2nd llama-server
       # then start all-models.py

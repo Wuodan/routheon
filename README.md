@@ -71,7 +71,7 @@ two [llama.cpp](https://github.com/ggml-org/llama.cpp) servers with small models
 ### Prerequisites
 
 - Docker Compose
-- less than 1GB disk space
+- requires less than 1 GB of disk space (see [Clean-up after Test](#clean-up-after-test))
 
 ### Test Setup
 
@@ -139,7 +139,7 @@ curl http://127.0.0.1:8080/v1/chat/completions \
       {"role": "user", "content": "Write a one-line Python function that prints hello."}
    ]
  }'
- ````
+ ```
 
 #### Test Model Summary Endpoint
 
@@ -190,9 +190,34 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 
 1. Copy [`traefik.yml`](traefik/traefik.yml) to `/etc/traefik/traefik.yml`
 2. Adapt the port to your needs.
-3. Change logging (`accessLog`) as you like.
+3. Adjust logging (`accessLog`) settings as needed.
 
 #### Traefik Config: Mappings API_KEY to llama.cpp instance
+
+Here you have 2 choices:
+
+- Dynamic Auto-Mapping: Let mappings be created/updated when `llama-server` starts
+- Manual Mapping: Manage the mapping files manually
+
+##### Dynamic Auto-Mapping with `create-mappings.py`
+
+Change your system daemon for `llama-server` to call [create-mappings.py](traefik/create-mapping/create-mapping.py).
+
+Example:
+
+```bash
+~/.routheon/venv/bin/python \
+  ~/.routheon/create-mappings.py 8011 TinyLlama_Q2 'my-api-key' && \
+\
+llama-server \
+  --hf-repo TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF:Q2_K \
+  --port 8011 \
+  --alias TinyLlama_Q2
+```
+
+> This uses defaults for the mapping folder and the host, use `--mappings` and `--host` to set them.
+
+##### Manual Mapping
 
 1. Create mappings in `/etc/traefik/mappings/`
 2. For each `llama.cpp` instance, create a `my-server.yml` file
@@ -222,7 +247,7 @@ This feature requires running a small companion service that collects the `/v1/m
 targets and provides it to Traefik.
 
 It’s **optional** — Routheon works normally without it.
-You only need it if you want `/v1/models` to list all active model servers.
+Only required if you want `/v1/models` to aggregate all active model servers.
 
 The service aggregates the `/v1/models` output from all reachable `llama.cpp` servers and returns an OpenAI compatible
 output as if one server was providing multiple models.
@@ -252,15 +277,16 @@ output as if one server was providing multiple models.
 
 #### Customize
 
-Adapt `all-models.py` to your setup with the following arguments:
+The defaults of `all-models.py` suit the described setup.  
+If your setup is different, then adapt `all-models.py` with the following arguments:
 
-- `--mappings`: Directory containing Traefik mapping files (default: `/etc/traefik/mappings`).
-- `--host`: Host to bind the HTTP server to. Use `127.0.0.1` (default) for remote access by Traefik only.
-- `--port`: Port to listen on (default: `9080`). Ensure this matches the URL in the `all-models.yml` file.
-- `--skip-mapping`: YAML filenames to skip (regex patterns, default: `["all-models.yml"]`).
-    - `all-models.yml`: The file for the summary itself must be in that list.
-    - Add patterns for any mapping files you want to exclude from the aggregation.
-- `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`).
+- `--mappings`: Directory containing Traefik mapping files (default: `/etc/traefik/mappings`)
+- `--host`: Host to bind the HTTP server to. Use `127.0.0.1` (default) for remote access by Traefik only
+- `--port`: Port to listen on (default: `9080`). Ensure this matches the URL in the `all-models.yml` file
+- `--skip-mapping`: YAML filenames to skip (regex patterns, default: `["all-models.yml"]`)
+    - `all-models.yml`: The file for the summary itself must be in that list
+    - Add patterns for other mapping files you want to exclude from the aggregation
+- `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`)
 
 Example:
 
