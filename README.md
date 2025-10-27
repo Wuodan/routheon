@@ -199,6 +199,7 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
    ```bash
    sudo mkdir -p /etc/traefik
    sudo curl -LO --output-dir /etc/traefik https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/traefik.yml
+   sudo mkdir -p /etc/traefik//mappings
    ```
 2. Adapt the port to your needs.
 3. Add logging (`accessLog`) and other Traefik settings as needed.
@@ -214,13 +215,15 @@ Here you have 2 choices:
 
 Change your system daemon for `llama-server` to also call [create-mapping.sh](traefik/create-mapping/create-mapping.sh).
 
-Example:
+Download script:
 
 ```bash
-# Download script
 sudo curl -LO --output-dir /usr/local/bin https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/create-mapping/create-mapping.sh
+```
 
-# Chain create-mapping.sh and llama-server
+Example: Chain create-mapping.sh and llama-server:
+
+```bash
 .usr/local/bin/create-mapping.sh \
   --port 8011 \
   --service TinyLlama_Q2 \
@@ -280,16 +283,17 @@ output as if one server was providing multiple models.
    sudo mkdir -p /etc/traefik/mappings/
    cd /etc/traefik/mappings/
    sudo curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/mappings/all-models.yml
-   sudo sed -i 's#http://all-models:#http://127.0.0.1:#' all-models.yml
+   sudo sed -i.bak 's#http://all-models:#http://127.0.0.1:#' all-models.yml
+   sudo rm -f all-models.yml.bak
    ```
 
 2. Copy [`traefik/all-models/all-models.py`](traefik/all-models/all-models.py) and [
    `traefik/all-models/requirements.txt`](traefik/all-models/requirements.txt) to `~/.routheon/`.
    ```bash
-   mkdir -p ~/.rutheon
-   cd ~/.rutheon
+   mkdir -p ~/.routheon
+   cd ~/.routheon
    curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/all-models/all-models.py
-   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/requirements.txt
+   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/all-models/requirements.txt
    ```
 
 3. Create a virtual environment and install dependencies in `~/.routheon/`:
