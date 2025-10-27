@@ -186,8 +186,8 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 
 ### Prerequisites
 
-- Traefik
-- llama.cpp: one or several instances of `llama-server` with dedicated ports
+- Install [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/)
+- Install [llama.cpp](https://github.com/ggml-org/llama.cpp#quick-start) to have one or several instances of `llama-server` with dedicated ports
 - Python: if you want the [Optional Model Summary Service](#optional-model-summary-service)
 
 ### Installation
@@ -195,8 +195,12 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 #### Traefik Config: `traefik.yml`
 
 1. Copy [`traefik/traefik.yml`](traefik/traefik.yml) to `/etc/traefik/traefik.yml`
+   ```bash
+   sudo mkdir -p /etc/traefik
+   sudo curl -LO --output-dir /etc/traefik https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/traefik.yml
+   ```
 2. Adapt the port to your needs.
-3. Adjust logging (`accessLog`) settings as needed.
+3. Add logging (`accessLog`) and other Traefik settings as needed.
 
 #### Traefik Config: Mappings API_KEY to llama.cpp instance
 
@@ -207,16 +211,20 @@ Here you have 2 choices:
 
 ##### Dynamic Auto-Mapping with `create-mapping.sh`
 
-Change your system daemon for `llama-server` to call [create-mapping.sh](traefik/create-mapping/create-mapping.sh).
+Change your system daemon for `llama-server` to also call [create-mapping.sh](traefik/create-mapping/create-mapping.sh).
 
 Example:
 
 ```bash
+# Download script
+sudo curl -LO --output-dir /usr/local/bin https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/create-mapping/create-mapping.sh
+
+# Chain create-mapping.sh and llama-server
 .usr/local/bin/create-mapping.sh \
   --port 8011 \
   --service TinyLlama_Q2 \
-  --api_key 'my-api-key'
-
+  --api_key 'my-api-key' && \
+\
 exec \
   llama-server \
       --hf-repo TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF:Q2_K \
@@ -264,20 +272,32 @@ output as if one server was providing multiple models.
 #### Installation
 
 1. Copy [`traefik/mappings/all-models.yml`](traefik/mappings/all-models.yml) to `/etc/traefik/mappings/` (same path as
-   other mappings).
+   other mappings).  
+   In `all-models.yml`, change the URL to `http://127.0.0.1:9080`.
 
-2. In `all-models.yml`, change the URL to `http://127.0.0.1:9080`.
+   ```bash
+   sudo mkdir -p /etc/traefik/mappings/
+   cd /etc/traefik/mappings/
+   sudo curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/mappings/all-models.yml
+   sudo sed -i 's#http://all-models:#http://127.0.0.1:#' all-models.yml
+   ```
 
-3. Copy [`traefik/all-models/all-models.py`](traefik/all-models/all-models.py) and [
+2. Copy [`traefik/all-models/all-models.py`](traefik/all-models/all-models.py) and [
    `traefik/all-models/requirements.txt`](traefik/all-models/requirements.txt) to `~/.routheon/`.
+   ```bash
+   mkdir -p ~/.rutheon
+   cd ~/.rutheon
+   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/all-models/all-models.py
+   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/requirements.txt
+   ```
 
-4. Create a virtual environment and install dependencies in `~/.routheon/`:
+3. Create a virtual environment and install dependencies in `~/.routheon/`:
    ```bash
    python3 -m venv ~/.routheon/venv
    ~/.routheon/venv/bin/pip install -r ~/.routheon/requirements.txt
    ```
 
-5. Set up a system daemon depending on your OS to run `all-models.py` using the virtual environment's Python.
+4. Set up a system daemon depending on your OS to run `all-models.py` using the virtual environment's Python.
 
    The daemon should run this command:
    ```bash
