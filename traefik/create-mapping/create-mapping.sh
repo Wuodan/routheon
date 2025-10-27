@@ -4,7 +4,7 @@
 # Licensed under Apache License 2.0.
 # See: https://github.com/Wuodan/routheon
 
-# Generate a Traefik mapping YAML file.
+# Generate (and rotate) a Traefik mapping YAML file.
 # Usage: ./create-mapping.sh --port <port> --service <service> --api_key <api_key> [--mappings <mappings>] [--host <host>]
 # Example: ./create-mapping.sh --port 8011 --service llama-server-1 --api_key API_KEY-1 --mappings /etc/traefik/mappings --host http://127.0.0.1
 
@@ -47,10 +47,27 @@ if [ -z "$PORT" ] || [ -z "$SERVICE" ] || [ -z "$API_KEY" ]; then
     usage
 fi
 
+# Rotate old mappings that use the same API key
+# - only .yml / .yaml
+# - skip the file we're about to create (${SERVICE}.yml)
+timestamp="$(date +%Y%m%d-%H%M%S)"
+if [ -d "$MAPPINGS" ]; then
+    grep -rl \
+        --include="*.yml" \
+        --include="*.yaml" \
+        --exclude="${SERVICE}.yml" \
+        -- "^Bearer ${API_KEY}$" "$MAPPINGS" 2>/dev/null |
+    while IFS= read -r match_file; do
+        new_name="${match_file}.bak.${timestamp}"
+        mv -- "$match_file" "$new_name"
+        echo "Rotated $match_file -> $new_name"
+    done
+fi
+
 TEMPLATE="http:
   routers:
     ${SERVICE}:
-      rule: \"HeaderRegexp(\`Authorization\`, \`^Bearer (${API_KEY})$\`)\"
+      rule: \"HeaderRegexp(\`Authorization\`, \`^Bearer ${API_KEY}$\`)\"
       service: ${SERVICE}
       entryPoints:
         - llama-servers

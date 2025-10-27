@@ -1,7 +1,7 @@
 http:
   routers:
     llama-server-1:
-      rule: "HeaderRegexp(`Authorization`, `^Bearer (API_KEY-1)$`)"
+      rule: "HeaderRegexp(`Authorization`, `^Bearer API_KEY-1$`)"
       service: llama-server-1
       entryPoints:
         - llama-servers
