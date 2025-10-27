@@ -10,13 +10,14 @@ WORKDIR /app
 RUN --mount=type=bind,source=requirements.txt,target=/tmp/requirements.txt \
     pip install --no-cache-dir -r /tmp/requirements.txt && \
     addgroup --system appgroup && \
-    adduser --system --ingroup appgroup appuser && \
-    chown -R appuser:appgroup /app
+    adduser --system --ingroup appgroup appuser
 
 # Copy app code
 COPY all-models.py /app/
 
 USER appuser
+
+EXPOSE 9080
 
 # run the tiny stdlib HTTP server in that script
 CMD ["python3", "all-models.py", \

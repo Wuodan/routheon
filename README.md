@@ -103,7 +103,7 @@ The models are stored in a Docker volume. When you are done testing, delete imag
 
 ```bash
 docker compose down
-docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon-all-models
+docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_all-models:latest
 docker volume rm routheon_llama_cpp
 ```
 
@@ -168,9 +168,9 @@ curl http://127.0.0.1:8080/v1/models \
 You can stop one of the llama-servers and the summary endpoint will show only one model:
 
 ```bash
-docker compose stop llama-server-1
+docker compose stop llama-server-2
 curl http://127.0.0.1:8080/v1/models
-docker compose up -d
+docker compose start llama-server-2
 ```
 
 ---

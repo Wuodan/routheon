@@ -7,10 +7,8 @@ Licensed under Apache License 2.0.
 See: https://github.com/Wuodan/routheon
 """
 
-import os
 import argparse
-from typing import Optional
-
+import os
 
 TEMPLATE = """http:
   routers:
@@ -24,7 +22,7 @@ TEMPLATE = """http:
     {SERVICE}:
       loadBalancer:
         servers:
-          - url: "http://127.0.0.1:{PORT}"
+          - url: "{HOST}:{PORT}"
 """
 
 
@@ -40,13 +38,17 @@ def main() -> None:
     parser.add_argument("--mappings",
                         default="/etc/traefik/mappings",
                         help="Directory to output the mapping file")
+    parser.add_argument("--host",
+                        default="http://127.0.0.1",
+                        help="Host of the llama-server service")
     args = parser.parse_args()
 
     # Perform replacements
     content = TEMPLATE.format(
         SERVICE=args.service,
         API_KEY=args.api_key,
-        PORT=args.port
+        PORT=args.port,
+        HOST=args.host
     )
 
     # Ensure output directory exists

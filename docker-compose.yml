@@ -18,21 +18,13 @@ services:
       - ./traefik/mappings/:/etc/traefik/mappings/:ro
       - /tmp/log/traefik/:/tmp/log/traefik/
 
-  all-models:
-    # for development
-    # pull_policy: build
-    build:
-      context: traefik/all-models/
-    volumes:
-      - ./traefik/mappings/:/etc/traefik/mappings/:ro
-
   llama-server-1:
     image: ghcr.io/ggml-org/llama.cpp:server
     healthcheck:
       test: [ "CMD", "curl", "-fsS", "http://127.0.0.1:8011/v1/health" ]
       start_period: 10m
     volumes:
-      - llama_cpp:/models:/models
+      - llama_cpp:/models
     environment:
       LLAMA_CACHE: /models/llama-cache
     command: |
@@ -48,7 +40,7 @@ services:
       test: [ "CMD", "curl", "-fsS", "http://127.0.0.1:8012/v1/health" ]
       start_period: 10m
     volumes:
-      - llama_cpp:/models:/models
+      - llama_cpp:/models
     environment:
       LLAMA_CACHE: /models/llama-cache
     command: |
@@ -57,6 +49,26 @@ services:
       --port 8012
       --host 0.0.0.0
       --alias mistral-tiny_Q2
+
+  all-models:
+    build:
+      context: traefik/all-models/
+    volumes:
+      - ./traefik/mappings/:/etc/traefik/mappings/:ro
+
+  create-mapping:
+    image: python:slim
+    depends_on:
+      - all-models
+    volumes:
+      - ./traefik/all-models/create-mapping.py:/usr/local/bin/create-mapping.py:ro
+      - ./traefik/mappings/:/etc/traefik/mappings/
+      # simulate create-mapping.py for 2nd llama-server
+      # then start all-models.py
+      # --host llama-server-2: is the name of the docker-compose service here
+      # --host 0.0.0.0: is needed here when insise docker compose as traefik is in another service
+    command: |
+       python /usr/local/bin/create-mapping.py 8012 llama-server-2 API_KEY-2 --mappings /etc/traefik/mappings --host http://llama-server-2
 
 volumes:
   llama_cpp:
