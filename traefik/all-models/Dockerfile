@@ -7,8 +7,9 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # Install dependencies and create user
-RUN --mount=type=bind,source=requirements.txt,target=/tmp/requirements.txt \
-    pip install --no-cache-dir -r /tmp/requirements.txt && \
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt && \
     addgroup --system appgroup && \
     adduser --system --ingroup appgroup appuser
 
