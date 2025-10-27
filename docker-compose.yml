@@ -53,6 +53,7 @@ services:
   all-models:
     build:
       context: traefik/all-models/
+    image: routheon_all-models:demo
     volumes:
       - ./traefik/mappings/:/etc/traefik/mappings/:ro
 

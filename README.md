@@ -103,7 +103,7 @@ The models are stored in a Docker volume. When you are done testing, delete imag
 
 ```bash
 docker compose down
-docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_all-models:latest
+docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_all-models:demo
 ```
 
 Remove the volume with the models:
