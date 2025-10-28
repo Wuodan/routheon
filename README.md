@@ -102,8 +102,16 @@ docker compose ps
 The models are stored in a Docker volume. When you are done testing, delete images and the volume with:
 
 ```bash
+# docker clean-up
 docker compose down
 docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_all-models:demo
+
+# backuped during test
+mv traefik/mappings/llama-server-3.yml{.bak.*,} 2>/dev/null
+
+# created during test
+[ -f traefik/mappings/llama-server-2.yml ] && \
+  sudo rm traefik/mappings/llama-server-2.yml
 ```
 
 Remove the volume with the models:
