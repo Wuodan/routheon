@@ -32,7 +32,7 @@ services:
       --n-predict 512
       --port 8011
       --host 0.0.0.0
-      --alias TinyLlama_Q2
+      --alias TinyLlama_Chat
 
   llama-server-2:
     image: ghcr.io/ggml-org/llama.cpp:server
@@ -48,7 +48,7 @@ services:
       --n-predict 512
       --port 8012
       --host 0.0.0.0
-      --alias mistral-tiny_Q2
+      --alias mistral-tiny
 
   all-models:
     build:

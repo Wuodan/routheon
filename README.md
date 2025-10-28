@@ -44,7 +44,7 @@ This feature is optional and requires a small companion service.
         ▼                         ▼                             ▼
 ┌──────────────────┐     ┌──────────────────┐     ┌────────────────────────┐
 │ llama-server-1   │     │ llama-server-2   │     │ Model Summary Service  │
-│ TinyLlama_Q2     │     │ Mistral-tiny_Q2  │     │ (optional, port 9080)  │
+│ TinyLlama_Chat   │     │ mistral-tiny     │     │ (optional, port 9080)  │
 │ (API_KEY-1)      │     │ (API_KEY-2)      │     │ aggregates /v1/models  │
 └──────────────────┘     └──────────────────┘     │ across all backends    │
         ▲                         ▲               └────────────────────────┘
@@ -124,14 +124,14 @@ docker volume rm routheon_llama_cpp
 
 Use the following `curl` commands to test the setup with `API_KEY-1` and `API_KEY-2`.
 
-**For API_KEY-1 and routing to llama-server-1 (model=TinyLlama_Q2):**
+**For API_KEY-1 and routing to llama-server-1 (model=TinyLlama_Chat):**
 
 ```bash
 curl http://127.0.0.1:8080/v1/chat/completions \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer API_KEY-1" \
 -d '{
-   "model": "TinyLlama_Q2",
+   "model": "TinyLlama_Chat",
    "messages": [
       {"role": "system", "content": "You are a concise assistant."},
       {"role": "user", "content": "Write a one-line Python function that prints hello."}
@@ -139,14 +139,14 @@ curl http://127.0.0.1:8080/v1/chat/completions \
  }'
 ```
 
-**For API_KEY-2 and routing to llama-server-2 (model=mistral-tiny_Q2):**
+**For API_KEY-2 and routing to llama-server-2 (model=mistral-tiny):**
 
 ```bash
 curl http://127.0.0.1:8080/v1/chat/completions \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer API_KEY-2" \
 -d '{
-   "model": "mistral-tiny_Q2",
+   "model": "mistral-tiny",
    "messages": [
       {"role": "system", "content": "You are a concise assistant."},
       {"role": "user", "content": "Write a one-line Python function that prints hello."}
@@ -234,14 +234,14 @@ Example: Chain create-mapping.sh and llama-server:
 ```bash
 .usr/local/bin/create-mapping.sh \
   --port 8011 \
-  --service TinyLlama_Q2 \
+  --service TinyLlama_Chat \
   --api_key 'my-api-key' && \
 \
 exec \
   llama-server \
       --hf-repo TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF:Q2_K \
       --port 8011 \
-      --alias TinyLlama_Q2
+      --alias TinyLlama_Chat
 ```
 
 > This uses defaults for the mapping folder and the host, use `--mappings` and `--host` to set them.
