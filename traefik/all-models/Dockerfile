@@ -4,14 +4,14 @@ FROM python:slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR /app
-
 # Install dependencies and create user
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt && \
     addgroup --system appgroup && \
     adduser --system --ingroup appgroup appuser
+
+WORKDIR /app
 
 # Copy app code
 COPY all-models.py /app/

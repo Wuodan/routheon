@@ -47,6 +47,9 @@ if [ -z "$PORT" ] || [ -z "$SERVICE" ] || [ -z "$API_KEY" ]; then
     usage
 fi
 
+# Convert illegal chars in service name to underscore (in case raw HF model is passed)
+SERVICE="$(printf '%s' "$SERVICE" | sed 's/[^A-Za-z0-9._-]/_/g')"
+
 echo "Creating mapping file '$MAPPINGS/${SERVICE}.yml' for Traefik service '$SERVICE' on '$HOST:$PORT'"
 
 if [ ! -d "$MAPPINGS" ]; then
