@@ -67,7 +67,7 @@ services:
       # simulate create-mapping.sh for 2nd llama-server
       # then start all-models.py
       # --host llama-server-2: is the name of the docker-compose service here
-      # --host 0.0.0.0: is needed here when insise docker compose as traefik is in another service
+      # --host 0.0.0.0: is needed here when inside docker compose as traefik is in another service
     command:
       - /bin/sh
       - -c

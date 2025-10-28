@@ -212,7 +212,7 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 2. Adapt the port to your needs.
 3. Add logging (`accessLog`) and other Traefik settings as needed.
 
-#### Traefik Config: Mappings API_KEY to llama.cpp instance
+#### Traefik Config: Map API_KEY to llama.cpp instance
 
 Here you have 2 choices:
 
