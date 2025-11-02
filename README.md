@@ -85,7 +85,7 @@ cd routheon
 #### Run the Docker Compose File
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Wait for all `llama-server` services to be `healthy`. The models must be downloaded before the services are fully
