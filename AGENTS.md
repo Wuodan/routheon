@@ -5,7 +5,7 @@
 - `traefik/traefik.yml`: Static Traefik config and entrypoint.
 - `traefik/mappings/*.yml`: API key → backend mappings (watched by Traefik).
 - `traefik/create-mapping/create-mapping.sh`: Generates/rotates mapping files.
-- `routheon-server/`: Lightweight Python service aggregating `/v1/models` and `/stats`.
+- `routheon_server/`: Lightweight Python service aggregating `/v1/models` and `/stats`.
 
 ## Build, Test, and Development Commands
 - Start demo: `docker compose up -d`
@@ -24,7 +24,7 @@
 - Bash: `#!/bin/bash`, `set -euo pipefail`, small functions + `usage`, POSIX‑friendly where feasible.
 - YAML: 2‑space indent; filenames `*.yml`. Mapping filenames match service name; sanitized to `[A-Za-z0-9._-]` (see script).
 - Naming: Traefik service/router names mirror mapping filename; model aliases are simple, lowercase or `Camel_Case` (e.g., `mistral-tiny`, `TinyLlama_Chat`).
-- Linting/formatting: run language-specific tools only on touched files—`ruff check routheon-server --fix`, `shellcheck`/`bash -n` for scripts, `yamllint traefik` for YAML, and pick the equivalent best-practice linter/formatter for any other file type you modify—so best-practice rules stay enforced without rewriting the entire repo.
+- Linting/formatting: run language-specific tools only on touched files—`ruff check routheon_server --fix`, `shellcheck`/`bash -n` for scripts, `yamllint traefik` for YAML, and pick the equivalent best-practice linter/formatter for any other file type you modify—so best-practice rules stay enforced without rewriting the entire repo.
 
 ## Testing Guidelines
 - No formal test suite. Validate via `curl` and Docker healthchecks.

@@ -7,12 +7,8 @@ from pathlib import Path
 from typing import List
 
 
-SCRIPT_PATH: Path = (
-    Path(__file__).resolve().parents[2]
-    / "traefik"
-    / "create-mapping"
-    / "create-mapping.sh"
-)
+REPO_ROOT: Path = Path(__file__).resolve().parent.parent
+SCRIPT_PATH: Path = REPO_ROOT / "traefik" / "create-mapping" / "create-mapping.sh"
 
 
 def _run_script(args: List[str], cwd: Path) -> subprocess.CompletedProcess[str]:

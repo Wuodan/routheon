@@ -52,11 +52,11 @@ services:
 
   routheon-server:
     build:
-      context: ./routheon-server/
+      context: .
     image: routheon_routheon-server:demo
     volumes:
       - ./traefik/mappings/:/etc/traefik/mappings/:ro
-      - ./routheon-server/stats-config.yml:/home/appuser/.routheon/stats-config.yml:ro
+      - ./stats-config.yml:/home/appuser/.routheon/stats-config.yml:ro
 
   create-mapping:
     image: python:slim

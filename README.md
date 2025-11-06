@@ -307,11 +307,12 @@ compatible response as if one server was providing multiple models.
    sudo rm -f routheon-server.yml.bak
    ```
 
-2. Install routheon-server into a virtual environment (either from the cloned repo or directly via `pip`):
+2. Install routheon-server into a virtual environment (either from PyPI or from the cloned repo):
    ```bash
    python3 -m venv ~/.routheon/venv
-   ~/.routheon/venv/bin/pip install "git+https://github.com/Wuodan/routheon.git#subdirectory=routheon-server"
+   ~/.routheon/venv/bin/pip install routheon-server
    ```
+   For local development builds, run `~/.routheon/venv/bin/pip install .` from the repository root instead.
 
 3. Set up a system daemon depending on your OS to run the installed console script.
 
