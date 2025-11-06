@@ -16,20 +16,34 @@ import re
 import time
 import urllib.error
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, Future
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional, TypedDict, Mapping
 
 import psutil
 import yaml
 
 
-def configure_logging(level: str):
+def configure_logging(level: str) -> None:
     """Configure logging based on the provided level."""
-    numeric_level = getattr(logging, level.upper(), None)
+    numeric_level: Optional[int] = getattr(logging, level.upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError(f'Invalid log level: {level}')
     logging.basicConfig(level=numeric_level, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+class DataItem(TypedDict, total=False):
+    id: str
+
+
+class ModelItem(TypedDict, total=False):
+    model: str
+    name: str
+
+
+class ModelsPayload(TypedDict, total=False):
+    models: List[ModelItem]
+    data: List[DataItem]
 
 
 def urls_from_mapping(path: str) -> List[str]:
@@ -50,7 +64,7 @@ def urls_from_mapping(path: str) -> List[str]:
         return []
 
 
-def fetch_models_payload(url: str, mapping_timeout: int) -> Dict[str, Any]:
+def fetch_models_payload(url: str, mapping_timeout: int) -> ModelsPayload:
     """
     Call <url>/v1/models and return the parsed JSON, or {} on error.
     Expected shape:
@@ -73,7 +87,7 @@ def fetch_models_payload(url: str, mapping_timeout: int) -> Dict[str, Any]:
         return {}
 
 
-def normalize_model_id(m: Any) -> Optional[str]:
+def normalize_model_id(m: Mapping[str, object]) -> Optional[str]:
     """
     Get the model's id string from a 'models' entry.
     Prefer 'model', else 'name', else None.
@@ -87,7 +101,7 @@ def normalize_model_id(m: Any) -> Optional[str]:
     return None
 
 
-def get_system_stats() -> Dict[str, Any]:
+def get_system_stats() -> Dict[str, object]:
     """
     Collect system statistics including CPU, memory, disk usage, and system info.
     Returns a dictionary with all the metrics.
@@ -95,12 +109,15 @@ def get_system_stats() -> Dict[str, Any]:
     try:
         # System information
         boot_time = psutil.boot_time()
-        uptime = time.time() - boot_time
+        uptime: float = time.time() - boot_time
         
         # CPU information
-        cpu_percent = psutil.cpu_percent(interval=1)
-        cpu_count = psutil.cpu_count()
-        load_avg = psutil.getloadavg() if hasattr(psutil, 'getloadavg') else [0, 0, 0]
+        cpu_percent: float = psutil.cpu_percent(interval=1)
+        cpu_count: Optional[int] = psutil.cpu_count()
+        cpu_count_logical: Optional[int] = psutil.cpu_count(logical=True)
+        core_count_val: int = int(cpu_count) if cpu_count is not None else 0
+        core_count_logical_val: int = int(cpu_count_logical) if cpu_count_logical is not None else 0
+        load_avg: List[float] = list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else [0.0, 0.0, 0.0]
         
         # Memory information
         memory = psutil.virtual_memory()
@@ -113,7 +130,7 @@ def get_system_stats() -> Dict[str, Any]:
         net_io = psutil.net_io_counters()
         
         # Process count
-        process_count = len(psutil.pids())
+        process_count: int = len(psutil.pids())
         
         return {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -134,8 +151,8 @@ def get_system_stats() -> Dict[str, Any]:
                     "5min": round(load_avg[1], 2),
                     "15min": round(load_avg[2], 2)
                 },
-                "core_count": cpu_count,
-                "core_count_logical": psutil.cpu_count(logical=True)
+                "core_count": core_count_val,
+                "core_count_logical": core_count_logical_val
             },
             "memory": {
                 "total": memory.total,
@@ -188,7 +205,7 @@ def get_system_stats() -> Dict[str, Any]:
         }
 
 
-def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
+def aggregate_all(urls: set[str], mapping_timeout: int) -> ModelsPayload:
     """
     1. read all traefik mapping files
     2. call /v1/models on each backend in parallel
@@ -198,15 +215,15 @@ def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
     4. align indices and return one flat JSON
     """
 
-    data_map = {}
-    models_map = {}
+    data_map: Dict[str, DataItem] = {}
+    models_map: Dict[str, ModelItem] = {}
 
     with ThreadPoolExecutor() as executor:
-        futures = {executor.submit(fetch_models_payload, u, mapping_timeout): u for u in urls}
+        futures: Dict[Future[ModelsPayload], str] = {executor.submit(fetch_models_payload, u, mapping_timeout): u for u in urls}
         for future in futures:
             u = futures[future]
             try:
-                payload = future.result()
+                payload: ModelsPayload = future.result()
             except Exception as e:
                 logging.error(f"Error fetching models from {u}: {e}")
                 continue
@@ -237,9 +254,9 @@ def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
                 logging.error(f"Unexpected error in aggregate_all while processing models from {u}: {e}")
 
     # align indexes
-    all_ids = sorted(set(data_map.keys()) | set(models_map.keys()))
-    aligned_data = [data_map.get(mid, {"id": mid}) for mid in all_ids]
-    aligned_models = [models_map.get(mid, {"model": mid, "name": mid}) for mid in all_ids]
+    all_ids: List[str] = sorted(set(data_map.keys()) | set(models_map.keys()))
+    aligned_data: List[DataItem] = [data_map.get(mid, {"id": mid}) for mid in all_ids]
+    aligned_models: List[ModelItem] = [models_map.get(mid, {"model": mid, "name": mid}) for mid in all_ids]
 
     return {
         "models": aligned_models,
@@ -254,7 +271,7 @@ class OneShotHandler(BaseHTTPRequestHandler):
 
     # collect all unique backend URLs from all mapping files
     def get_urls(self) -> set[str]:
-        return {
+        urls: set[str] = {
             u
             for file_name in os.listdir(self.mappings)
             if file_name.endswith((".yml", ".yaml"))
@@ -262,8 +279,9 @@ class OneShotHandler(BaseHTTPRequestHandler):
                not any(re.search(pattern, file_name) for pattern in self.skip_mapping)
             for u in urls_from_mapping(os.path.join(self.mappings, file_name))
         }
+        return urls
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         if self.path == "/v1/models":
             urls = self.get_urls()
             result = aggregate_all(urls, self.mapping_timeout)
