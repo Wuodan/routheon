@@ -311,7 +311,8 @@ output as if one server was providing multiple models.
    python3 -m venv ~/.routheon/venv
    ~/.routheon/venv/bin/pip install "git+https://github.com/Wuodan/routheon.git#subdirectory=traefik/routheon-server"
    ```
-   > Already cloned? Replace the `pip install ...` line with `~/.routheon/venv/bin/pip install /path/to/routheon/traefik/routheon-server`.
+   > Already cloned? Replace the `pip install ...` line with
+   `~/.routheon/venv/bin/pip install /path/to/routheon/traefik/routheon-server`.
 
 3. Set up a system daemon depending on your OS to run the installed console script.
 
@@ -346,16 +347,18 @@ Example:
 
 ##### Limit `/stats` output
 
-If `/stats` exposes information you do not want to share, create a YAML filter file:
+If `/stats` exposes information you do not want to share, create a YAML configuration file:
 
 ```yaml
-# ~/.routheon/stats-filter.yml
-disabled_sections:
-  - network
-disabled_fields:
+# ~/.routheon/stats-config.yml
+enabled_sections:
+  - system
+  - cpu
+  - memory
+enabled_fields:
   memory:
-    - free
-    - free_gb
+    - available
+    - percent
 ```
 
 Start the service with:
@@ -363,10 +366,12 @@ Start the service with:
 ```bash
 ~/.routheon/venv/bin/routheon-server \
   --mappings /etc/traefik/mappings \
-  --stats-config-file ~/.routheon/stats-filter.yml
+  --stats-config-file ~/.routheon/stats-config.yml
 ```
 
-Sections listed in `disabled_sections` disappear entirely, while `disabled_fields` removes keys from the remaining sections.
+When a config file is provided, only sections listed in `enabled_sections` are exposed.  
+Within each section, `enabled_fields` narrows the dictionary to the listed keys.  
+Omit `enabled_sections` to keep all sections but still restrict individual fields.
 
 ---
 

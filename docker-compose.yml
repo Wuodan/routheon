@@ -56,6 +56,7 @@ services:
     image: routheon_routheon-server:demo
     volumes:
       - ./traefik/mappings/:/etc/traefik/mappings/:ro
+      - ./traefik/routheon-server/stats-config.yml:/home/appuser/.routheon/stats-config.yml:ro
 
   create-mapping:
     image: python:slim

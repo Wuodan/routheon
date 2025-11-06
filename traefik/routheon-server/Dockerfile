@@ -22,4 +22,5 @@ CMD ["routheon-server", \
      "--mappings", "/etc/traefik/mappings", \
      "--host", "0.0.0.0", \
      "--port", "9080", \
-     "--skip-mapping", "routheon-server.yml"]
+     "--skip-mapping", "routheon-server.yml", \
+     "--stats-config-file", "/home/appuser/.routheon/stats-config.yml"]

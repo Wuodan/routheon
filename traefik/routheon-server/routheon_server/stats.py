@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import platform
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Mapping, MutableMapping, Optional, Set
 
 import psutil
@@ -16,40 +16,43 @@ StatsPayload = Dict[str, object]
 
 
 @dataclass(slots=True, frozen=True)
-class StatsFilter:
-    """Defines which sections and fields should be omitted from /stats."""
+class StatsConfig:
+    """Defines which sections and fields should be retained in /stats."""
 
-    disabled_sections: Set[str]
-    disabled_fields: Mapping[str, Set[str]]
+    enabled_sections: Optional[Set[str]] = None
+    enabled_fields: Mapping[str, Set[str]] = field(default_factory=dict)
 
     def apply(self, stats: StatsPayload) -> StatsPayload:
-        filtered: MutableMapping[str, object] = {
-            key: value
-            for key, value in stats.items()
-            if key not in self.disabled_sections
-        }
+        filtered: MutableMapping[str, object]
+        if self.enabled_sections is None:
+            filtered = dict(stats)
+        else:
+            filtered = {
+                key: value for key, value in stats.items() if key in self.enabled_sections
+            }
 
-        for section, fields in self.disabled_fields.items():
+        for section, fields in self.enabled_fields.items():
             section_payload = filtered.get(section)
             if isinstance(section_payload, dict):
-                filtered[section] = {
-                    key: value
-                    for key, value in section_payload.items()
-                    if key not in fields
-                }
+                if fields:
+                    filtered[section] = {
+                        key: value for key, value in section_payload.items() if key in fields
+                    }
+                else:
+                    filtered[section] = {}
         return dict(filtered)
 
 
 @dataclass(slots=True)
 class StatsCollector:
-    """Collects system stats and applies an optional filter."""
+    """Collects system stats and applies an optional configuration."""
 
-    stats_filter: Optional[StatsFilter] = None
+    config: Optional[StatsConfig] = None
 
     def collect(self) -> StatsPayload:
         stats = _collect_raw_stats()
-        if self.stats_filter:
-            return self.stats_filter.apply(stats)
+        if self.config:
+            return self.config.apply(stats)
         return stats
 
 
@@ -150,8 +153,8 @@ def _collect_raw_stats() -> StatsPayload:
         }
 
 
-def load_stats_filter(path: str) -> Optional[StatsFilter]:
-    """Load stats filter configuration from YAML."""
+def load_stats_config(path: str) -> Optional[StatsConfig]:
+    """Load stats configuration from YAML."""
 
     try:
         with open(path, encoding="utf-8") as file:
@@ -166,27 +169,36 @@ def load_stats_filter(path: str) -> Optional[StatsFilter]:
         logging.error("Error reading stats config file %s: %s", path, exc)
         return None
 
-    disabled_sections = raw_config.get("disabled_sections", [])
-    disabled_fields = raw_config.get("disabled_fields", {})
+    enabled_sections_raw = raw_config.get("enabled_sections")
+    enabled_fields_raw = raw_config.get("enabled_fields", {})
 
-    if not isinstance(disabled_sections, list):
-        logging.error("disabled_sections must be a list in %s", path)
-        return None
-    if not isinstance(disabled_fields, dict):
-        logging.error("disabled_fields must be a mapping in %s", path)
+    allowed_sections: Optional[Set[str]] = None
+    if enabled_sections_raw is not None:
+        if not isinstance(enabled_sections_raw, list):
+            logging.error("enabled_sections must be a list in %s", path)
+            return None
+        allowed_sections = {str(item) for item in enabled_sections_raw}
+
+    if not isinstance(enabled_fields_raw, dict):
+        logging.error("enabled_fields must be a mapping in %s", path)
         return None
 
-    section_set: Set[str] = {str(item) for item in disabled_sections}
     field_map: Dict[str, Set[str]] = {}
-    for section, fields in disabled_fields.items():
+    for section, fields in enabled_fields_raw.items():
+        if fields is None:
+            field_map[str(section)] = set()
+            continue
         if not isinstance(fields, list):
             logging.error(
-                "disabled_fields.%s must be a list in %s", section, path
+                "enabled_fields.%s must be a list in %s", section, path
             )
             continue
-        field_map[str(section)] = {str(field) for field in fields}
+        field_map[str(section)] = {str(f) for f in fields}
 
-    if not section_set and not field_map:
+    if allowed_sections is None and not field_map:
+        logging.warning(
+            "Stats config %s does not limit any sections or fields; ignoring.", path
+        )
         return None
 
-    return StatsFilter(disabled_sections=section_set, disabled_fields=field_map)
+    return StatsConfig(enabled_sections=allowed_sections, enabled_fields=field_map)

@@ -10,7 +10,7 @@ from typing import ClassVar, Dict, Type
 from .aggregator import ModelAggregator
 from .config import ServerConfig
 from .models import ModelsResponse
-from .stats import StatsCollector, load_stats_filter
+from .stats import StatsCollector, load_stats_config
 
 JsonDict = Dict[str, object]
 
@@ -61,12 +61,12 @@ def run_server(config: ServerConfig) -> None:
         skip_patterns=config.skip_mapping,
         mapping_timeout=config.mapping_timeout,
     )
-    stats_filter = (
-        load_stats_filter(config.stats_config_file)
+    stats_config = (
+        load_stats_config(config.stats_config_file)
         if config.stats_config_file
         else None
     )
-    handler_class.stats_collector = StatsCollector(stats_filter=stats_filter)
+    handler_class.stats_collector = StatsCollector(config=stats_config)
 
     httpd: HTTPServer = HTTPServer((config.host, config.port), handler_class)
     logging.info("Starting routheon-server on %s:%s", config.host, config.port)

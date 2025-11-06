@@ -1,6 +1,7 @@
 # routheon-server
 
-`routheon-server` aggregates `/v1/models` responses from every Traefik mapping and serves both `/v1/models` and `/stats` endpoints behind a single HTTP server.
+`routheon-server` aggregates `/v1/models` responses from every Traefik mapping and serves both `/v1/models` and `/stats`
+endpoints behind a single HTTP server.
 
 ## Installation
 
@@ -10,7 +11,8 @@ python3 -m venv .venv
 pip install .
 ```
 
-The install registers a `routheon-server` console script inside the virtual environment. Check the available options with:
+The installation registers a `routheon-server` console script inside the virtual environment. Check the available
+options with:
 
 ```bash
 routheon-server --help
@@ -41,13 +43,18 @@ routheon-server \
 Create a YAML file to hide sensitive sections or fields:
 
 ```yaml
-# ~/.routheon/stats-filter.yml
-disabled_sections:
-  - network
-disabled_fields:
+# ~/.routheon/stats-config.yml
+enabled_sections:
+  - system
+  - cpu
+  - memory
+enabled_fields:
   memory:
-    - free
-    - free_gb
+    - available
+    - percent
 ```
 
-Point the server to it with `--stats-config-file ~/.routheon/stats-filter.yml`. Sections listed in `disabled_sections` disappear entirely, while `disabled_fields` removes individual keys from the surviving sections.
+Point the server to it with `--stats-config-file ~/.routheon/stats-config.yml`.  
+Only sections listed in `enabled_sections` are exposed; `enabled_fields` trims the corresponding section payload to the
+named keys.  
+Omit `enabled_sections` to keep all sections while still restricting specific fields.
