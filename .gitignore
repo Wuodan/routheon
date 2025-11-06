@@ -5,6 +5,8 @@ __pycache__/
 dist/
 /node_modules/
 
+**/.coverage
+
 .roomodes
 # may contain API-keys
 .roo/mcp.json
