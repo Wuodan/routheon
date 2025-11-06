@@ -309,10 +309,10 @@ output as if one server was providing multiple models.
 2. Install the summary service into a virtual environment (either from the cloned repo or directly via `pip`):
    ```bash
    python3 -m venv ~/.routheon/venv
-   ~/.routheon/venv/bin/pip install "git+https://github.com/Wuodan/routheon.git#subdirectory=traefik/routheon-server"
+   ~/.routheon/venv/bin/pip install "git+https://github.com/Wuodan/routheon.git#subdirectory=routheon-server"
    ```
    > Already cloned? Replace the `pip install ...` line with
-   `~/.routheon/venv/bin/pip install /path/to/routheon/traefik/routheon-server`.
+   `~/.routheon/venv/bin/pip install /path/to/routheon/routheon-server`.
 
 3. Set up a system daemon depending on your OS to run the installed console script.
 
