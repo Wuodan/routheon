@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "routheon-server"
+version = "0.1.0"
+description = "Aggregate OpenAI-compatible /v1/models responses behind Traefik."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = [
+    "psutil",
+    "pyyaml",
+]
+
+[project.scripts]
+routheon-server = "routheon_server.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["routheon_server*"]
+

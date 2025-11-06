@@ -65,7 +65,7 @@ services:
       - ./traefik/create-mapping/create-mapping.sh:/usr/local/bin/create-mapping.sh:ro
       - ./traefik/mappings/:/etc/traefik/mappings/
       # simulate create-mapping.sh for 2nd llama-server
-      # then start routheon-server.py
+      # after start of routheon-server
       # --host llama-server-2: is the name of the docker-compose service here
       # --host 0.0.0.0: is needed here when inside docker compose as traefik is in another service
     command:

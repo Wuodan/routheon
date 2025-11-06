@@ -13,7 +13,7 @@
 - Logs (proxy): `docker compose logs -f traefik-proxy`
 - Stop/clean: `docker compose down`
 - Run summary service locally:
-  `python3 -m venv .venv && . .venv/bin/activate && pip install -r traefik/routheon-server/requirements.txt && python traefik/routheon-server/routheon-server.py --help`
+  `python3 -m venv .venv && . .venv/bin/activate && pip install traefik/routheon-server && routheon-server --help`
   (always create/use the shared repo-root `.venv`; do not scatter virtualenvs elsewhere)
 - Quick tests:
   - All models: `curl http://127.0.0.1:8080/v1/models`
@@ -28,7 +28,7 @@
 
 ## Testing Guidelines
 - No formal test suite. Validate via `curl` and Docker healthchecks.
-- For changes to `routheon-server.py`, exercise `/v1/models` and `/stats`; run with `--log-level DEBUG` for troubleshooting.
+- For changes to the summary service, exercise `/v1/models` and `/stats`; run with `--log-level DEBUG` for troubleshooting.
 
 ## Commit & Pull Request Guidelines
 - Commits: short, imperative subject (e.g., "Add endpoint /stats", "Fix typo").

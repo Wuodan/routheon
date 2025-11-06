@@ -306,32 +306,24 @@ output as if one server was providing multiple models.
    sudo rm -f routheon-server.yml.bak
    ```
 
-2. Copy [`traefik/routheon-server/routheon-server.py`](traefik/routheon-server/routheon-server.py) and [
-   `traefik/routheon-server/requirements.txt`](traefik/routheon-server/requirements.txt) to `~/.routheon/`.
-   ```bash
-   mkdir -p ~/.routheon
-   cd ~/.routheon
-   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/routheon-server/routheon-server.py
-   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/routheon-server/requirements.txt
-   ```
-
-3. Create a virtual environment and install dependencies in `~/.routheon/`:
+2. Install the summary service into a virtual environment (either from the cloned repo or directly via `pip`):
    ```bash
    python3 -m venv ~/.routheon/venv
-   ~/.routheon/venv/bin/pip install -r ~/.routheon/requirements.txt
+   ~/.routheon/venv/bin/pip install "git+https://github.com/Wuodan/routheon.git#subdirectory=traefik/routheon-server"
    ```
+   > Already cloned? Replace the `pip install ...` line with `~/.routheon/venv/bin/pip install /path/to/routheon/traefik/routheon-server`.
 
-4. Set up a system daemon depending on your OS to run `routheon-server.py` using the virtual environment's Python.
+3. Set up a system daemon depending on your OS to run the installed console script.
 
    The daemon should run this command:
    ```bash
-   ~/.routheon/venv/bin/python ~/.routheon/routheon-server.py
+   ~/.routheon/venv/bin/routheon-server
    ```
 
 #### Customize
 
-The defaults of `routheon-server.py` suit the described setup.  
-If your setup is different, then adapt `routheon-server.py` with the following arguments:
+The defaults of `routheon-server` suit the described setup.  
+If your setup is different, then adapt the command with the following arguments:
 
 - `--mappings`: Directory containing Traefik mapping files (default: `/etc/traefik/mappings`)
 - `--host`: Host to bind the HTTP server to. Use `127.0.0.1` (default) for remote access by Traefik only
@@ -340,15 +332,15 @@ If your setup is different, then adapt `routheon-server.py` with the following a
     - `routheon-server.yml`: The file for the summary itself must be in that list
     - Add patterns for other mapping files you want to exclude from the aggregation
 - `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`)
+- `--log-level`: Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`; default: `WARNING`)
 
 Example:
 
 ```bash
-~/.routheon/venv/bin/python \
- ~/.routheon/routheon-server.py \
-   --mappings /etc/traefik/mappings \
-   --host 127.0.0.1 \
-   --port 9080
+~/.routheon/venv/bin/routheon-server \
+  --mappings /etc/traefik/mappings \
+  --host 127.0.0.1 \
+  --port 9080
 ```
 
 ---
