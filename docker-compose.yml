@@ -50,22 +50,23 @@ services:
       --host 0.0.0.0
       --alias mistral-tiny
 
-  all-models:
+  routheon-server:
     build:
-      context: traefik/all-models/
-    image: routheon_all-models:demo
+      context: .
+    image: routheon_routheon-server:demo
     volumes:
       - ./traefik/mappings/:/etc/traefik/mappings/:ro
+      - ./stats-config.yml:/home/appuser/.routheon/stats-config.yml:ro
 
   create-mapping:
     image: python:slim
     depends_on:
-      - all-models
+      - routheon-server
     volumes:
       - ./traefik/create-mapping/create-mapping.sh:/usr/local/bin/create-mapping.sh:ro
       - ./traefik/mappings/:/etc/traefik/mappings/
       # simulate create-mapping.sh for 2nd llama-server
-      # then start all-models.py
+      # after start of routheon-server
       # --host llama-server-2: is the name of the docker-compose service here
       # --host 0.0.0.0: is needed here when inside docker compose as traefik is in another service
     command:

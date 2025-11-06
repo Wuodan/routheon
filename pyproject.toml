@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.18", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "routheon-server"
+description = "Expose OpenAI-compatible /v1/models aggregation plus /stats host metrics behind Traefik."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = [
+    "psutil",
+    "pyyaml",
+]
+dynamic = ["version"]
+
+[project.scripts]
+routheon-server = "routheon_server.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["routheon_server"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "routheon_server/_version.py"

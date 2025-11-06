@@ -1,0 +1,19 @@
+http:
+  routers:
+    routheon-server-all-models:
+      rule: "Path(`/v1/models`)"
+      service: routheon-server
+      entryPoints:
+        - llama-servers
+    
+    routheon-server-stats:
+      rule: "Path(`/stats`)"
+      service: routheon-server
+      entryPoints:
+        - llama-servers
+
+  services:
+    routheon-server:
+      loadBalancer:
+        servers:
+          - url: "http://routheon-server:9080"

@@ -1,0 +1,33 @@
+# Configure which parts of the /stats endpoint are exposed.
+# Omitting a section from enabled_sections removes it entirely.
+# Omitting a field from enabled_fields removes it from the corresponding section.
+#
+# Example:
+# enabled_sections:
+#   - system
+#   - cpu
+#   - memory
+# enabled_fields:
+#   memory:
+#     - available
+#     - percent
+enabled_sections:
+  - timestamp
+  - system
+  - cpu
+  - memory
+  - swap
+  - disk
+enabled_fields:
+  memory:
+    - percent
+    - total_gb
+    - available_gb
+    - free_gb
+  swap:
+    - total_gb
+    - used_gb
+    - free_gb
+  disk:
+    - percent
+    - free_gb
