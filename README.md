@@ -186,6 +186,17 @@ curl http://127.0.0.1:8080/v1/models
 docker compose start llama-server-2
 ```
 
+#### Test Host Stats Endpoint
+
+The same companion service serves `/stats`, which returns CPU, memory, disk, network, and uptime information for the
+host running the aggregator.
+
+```bash
+curl http://127.0.0.1:8080/stats | jq
+```
+
+Use it to monitor resource pressure before launching additional llama.cpp servers.
+
 ---
 
 ## Routheon in Production
@@ -276,15 +287,15 @@ This feature requires running a small companion service that collects the `/v1/m
 targets and provides it to Traefik.
 
 It’s **optional** — Routheon works normally without it.
-Only required if you want `/v1/models` to aggregate all active model servers.
+Only required if you want `/v1/models` to aggregate all active model servers or to expose `/stats`.
 
 The service aggregates the `/v1/models` output from all reachable `llama.cpp` servers and returns an OpenAI compatible
 output as if one server was providing multiple models.
 
 #### Installation
 
-1. Copy [`traefik/mappings/routheon-server.yml`](traefik/mappings/routheon-server.yml) to `/etc/traefik/mappings/` (same path as
-   other mappings).  
+1. Copy [`traefik/mappings/routheon-server.yml`](traefik/mappings/routheon-server.yml) to `/etc/traefik/mappings/` (same
+   path as other mappings).  
    In `routheon-server.yml`, change the URL to `http://127.0.0.1:9080`.
 
    ```bash
