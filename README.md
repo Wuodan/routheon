@@ -20,14 +20,15 @@ This enables per-user or per-model access control while keeping the architecture
 - Provide per-user or per-model access via API keys
 - Simplify client integration using an OpenAI-compatible endpoint
 
-### Model Summary Endpoint
+### Optional Routheon Server
 
-Routheon can optionally expose an **OpenAI-compatible `/v1/models` endpoint** that summarizes all reachable `llama.cpp`
-servers.  
-It provides a quick overview of which models are online and ready.
-The output is the same as if one OpenAI compatible server was serving several models.
+routheon-server is a lightweight companion process that exposes two helper endpoints:
 
-This feature is optional and requires a small companion service.
+- `/v1/models`: Aggregates every reachable `llama.cpp` backend into one OpenAI-compatible list
+- `/stats`: Shows basic host metrics (CPU, RAM, uptime) for the machine running the aggregator
+
+The core router works without this service, but enabling it gives you instant visibility into which models are online
+and the health of the host that serves them.
 
 ---
 
@@ -43,10 +44,10 @@ This feature is optional and requires a small companion service.
         │                         │                             │
         ▼                         ▼                             ▼
 ┌──────────────────┐     ┌──────────────────┐     ┌────────────────────────┐
-│ llama-server-1   │     │ llama-server-2   │     │ Model Summary Service  │
+│ llama-server-1   │     │ llama-server-2   │     │    routheon-server     │
 │ TinyLlama_Chat   │     │ mistral-tiny     │     │ (optional, port 9080)  │
-│ (API_KEY-1)      │     │ (API_KEY-2)      │     │ aggregates /v1/models  │
-└──────────────────┘     └──────────────────┘     │ across all backends    │
+│ (API_KEY-1)      │     │ (API_KEY-2)      │     │ /v1/models + /stats    │
+└──────────────────┘     └──────────────────┘     │ aggregate + host info  │
         ▲                         ▲               └────────────────────────┘
         │                         │                             ▲
         │                         │                             │
@@ -57,23 +58,23 @@ This feature is optional and requires a small companion service.
 
 The diagram above illustrates how Routheon routes incoming requests.  
 All traffic **with** an API key is forwarded by Traefik to the corresponding `llama.cpp` backend.  
-Requests to `/v1/models` **without** an API key are handled by the **optional Model Summary Service**,  
-which aggregates the `/v1/models` outputs from all reachable backends.
+Requests to `/v1/models` or `/stats` **without** an API key are handled by the **optional routheon-server**,  
+which aggregates model metadata and host statistics across all reachable backends.
 
 
 ---
 
-## Routheon Test
+## Routheon Demo
 
-The Routheon test sets up an API_KEY router using [Traefik](https://doc.traefik.io/traefik/) and includes
+The Routheon demo stack sets up an API_KEY router using [Traefik](https://doc.traefik.io/traefik/) and includes
 two [llama.cpp](https://github.com/ggml-org/llama.cpp) servers with small models.
 
 ### Prerequisites
 
 - Docker Compose
-- requires less than 1 GB of disk space (see [Clean-up after Test](#clean-up-after-test))
+- requires less than 1 GB of disk space (see [Clean-up after the Demo](#clean-up-after-the-demo))
 
-### Test Setup
+### Demo Setup
 
 #### Clone the Repository
 
@@ -97,19 +98,19 @@ To check status, run:
 docker compose ps
 ```
 
-#### Clean-up after Test
+#### Clean-up after the Demo
 
-The models are stored in a Docker volume. When you are done testing, delete images and the volume with:
+The models are stored in a Docker volume. When you are done with the demo, delete images and the volume with:
 
 ```bash
 # docker clean-up
 docker compose down
 docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_routheon-server:demo
 
-# backuped during test
+# backuped during demo
 mv traefik/mappings/llama-server-3.yml{.bak.*,} 2>/dev/null
 
-# created during test
+# created during demo
 [ -f traefik/mappings/llama-server-2.yml ] && \
   sudo rm traefik/mappings/llama-server-2.yml
 ```
@@ -120,9 +121,9 @@ Remove the volume with the models:
 docker volume rm routheon_llama_cpp
 ```
 
-### Test Requests
+### Demo Requests
 
-Use the following `curl` commands to test the setup with `API_KEY-1` and `API_KEY-2`.
+Use the following `curl` commands to exercise the setup with `API_KEY-1` and `API_KEY-2`.
 
 **For API_KEY-1 and routing to llama-server-1 (model=TinyLlama_Chat):**
 
@@ -154,9 +155,9 @@ curl http://127.0.0.1:8080/v1/chat/completions \
  }'
  ```
 
-#### Test Model Summary Endpoint
+#### Demo: Routheon Server `/v1/models`
 
-In this test setup, the Model Summary Service is already enabled.  
+In this demo stack, routheon-server is already enabled.  
 You can inspect which llama.cpp backends are up using `/v1/models`.
 
 ##### Without API key: See all active models
@@ -178,7 +179,7 @@ curl http://127.0.0.1:8080/v1/models \
 
 ##### Supports inactive llama-server
 
-You can stop one of the llama-servers and the summary endpoint will show only one model:
+You can stop one of the llama-servers and the routheon-server endpoint will show only one model:
 
 ```bash
 docker compose stop llama-server-2
@@ -186,10 +187,10 @@ curl http://127.0.0.1:8080/v1/models
 docker compose start llama-server-2
 ```
 
-#### Test Host Stats Endpoint
+#### Demo: Routheon Server `/stats`
 
-The same companion service serves `/stats`, which returns CPU, memory, disk, network, and uptime information for the
-host running the aggregator.
+routheon-server also serves `/stats`, which returns CPU, memory, disk, network, and uptime information for the host
+running the aggregator.
 
 ```bash
 curl http://127.0.0.1:8080/stats | jq
@@ -208,7 +209,7 @@ This describes a bare-metal setup without Docker. Both `traefik` and `llama.cpp`
 - Install [Traefik](https://doc.traefik.io/traefik/getting-started/install-traefik/)
 - Install [llama.cpp](https://github.com/ggml-org/llama.cpp#quick-start) to have one or several instances of
   `llama-server` with dedicated ports
-- Python: if you want the [Optional Model Summary Service](#optional-model-summary-service)
+- Python: if you want the [Optional Routheon Server](#optional-routheon-server)
 
 ### Installation
 
@@ -281,16 +282,16 @@ port.
 - All instances of `llama.cpp` can now be accessed remotely via a single common port
 - Access to each instance is controlled by API_KEY
 
-### Optional Model Summary Service
+### Optional Routheon Server
 
-This feature requires running a small companion service that collects the `/v1/models` information from all configured
-targets and provides it to Traefik.
+The routheon-server companion service collects the `/v1/models` information from all configured
+targets and provides both `/v1/models` and `/stats` endpoints back to Traefik.
 
 It’s **optional** — Routheon works normally without it.
-Only required if you want `/v1/models` to aggregate all active model servers or to expose `/stats`.
+Enable it only if you want `/v1/models` to aggregate all active model servers or to expose `/stats`.
 
-The service aggregates the `/v1/models` output from all reachable `llama.cpp` servers and returns an OpenAI compatible
-output as if one server was providing multiple models.
+The routheon-server aggregates the `/v1/models` output from all reachable `llama.cpp` servers and returns an OpenAI
+compatible response as if one server was providing multiple models.
 
 #### Installation
 
@@ -306,13 +307,11 @@ output as if one server was providing multiple models.
    sudo rm -f routheon-server.yml.bak
    ```
 
-2. Install the summary service into a virtual environment (either from the cloned repo or directly via `pip`):
+2. Install routheon-server into a virtual environment (either from the cloned repo or directly via `pip`):
    ```bash
    python3 -m venv ~/.routheon/venv
    ~/.routheon/venv/bin/pip install "git+https://github.com/Wuodan/routheon.git#subdirectory=routheon-server"
    ```
-   > Already cloned? Replace the `pip install ...` line with
-   `~/.routheon/venv/bin/pip install /path/to/routheon/routheon-server`.
 
 3. Set up a system daemon depending on your OS to run the installed console script.
 
@@ -330,7 +329,7 @@ If your setup is different, then adapt the command with the following arguments:
 - `--host`: Host to bind the HTTP server to. Use `127.0.0.1` (default) for remote access by Traefik only
 - `--port`: Port to listen on (default: `9080`). Ensure this matches the URL in the `routheon-server.yml` file
 - `--skip-mapping`: YAML filenames to skip (regex patterns, default: `["routheon-server.yml"]`)
-    - `routheon-server.yml`: The file for the summary itself must be in that list
+    - `routheon-server.yml`: The mapping file for the routheon-server itself must be in that list
     - Add patterns for other mapping files you want to exclude from the aggregation
 - `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`)
 - `--stats-config-file`: Path to a YAML file that hides selected `/stats` sections or fields
