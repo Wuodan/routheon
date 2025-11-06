@@ -28,7 +28,7 @@ routheon-server is a lightweight companion process that exposes two helper endpo
 - `/stats`: Shows basic host metrics (CPU, RAM, uptime) for the machine running the aggregator
 
 The core router works without this service, but enabling it gives you instant visibility into which models are online
-and the health of the host that serves them.
+and the metrics of the host that serves them.
 
 ---
 
@@ -371,6 +371,22 @@ Start the service with:
 When a config file is provided, only sections listed in `enabled_sections` are exposed.  
 Within each section, `enabled_fields` narrows the dictionary to the listed keys.  
 Omit `enabled_sections` to keep all sections but still restrict individual fields.
+
+---
+
+## Releasing `routheon-server`
+
+The Python helper package now derives its version from Git tags via `hatch-vcs`, so there's no manual edit to
+`pyproject.toml` when cutting a release. To publish a new version:
+
+1. Ensure `main` already contains the desired commits, then create a tag that matches the version you intend to push,
+   e.g. `git tag v0.2.0`.
+2. Push the tag (`git push origin v0.2.0`). The GitHub Actions workflow runs lint/tests across supported Python
+   versions and, if the push is a tag, builds and uploads to PyPI using that semantic version.
+3. (Optional) Draft a GitHub Release pointing at the same tag for humans to discover the changes.
+
+Because PyPI treats releases as immutable, bump the tag (e.g. `v0.2.1`) for any follow-up fixes instead of trying to
+replace an existing version.
 
 ---
 

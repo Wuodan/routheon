@@ -41,9 +41,6 @@ jobs:
     needs: test
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: routheon-server
     environment:
       name: pypi
       url: https://pypi.org/project/routheon-server
@@ -62,7 +59,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install build
-          python -m build
+          python -m build routheon-server
 
       - name: Publish distribution
         uses: pypa/gh-action-pypi-publish@release/v1
