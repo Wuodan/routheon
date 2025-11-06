@@ -303,8 +303,8 @@ def main() -> None:
                         help="Port to listen on (e.g. 9080)")
     parser.add_argument("--skip-mapping",
                         action='append',
-                        default=["all-models.yml"],
-                        help="YAML filenames to skip (regex patterns, e.g. all-models.yml)")
+                        default=["routheon-server.yml"],
+                        help="YAML filenames to skip (regex patterns, e.g. routheon-server.yml)")
     parser.add_argument("--mapping-timeout",
                         type=int,
                         default=2,

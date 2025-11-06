@@ -14,15 +14,15 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 WORKDIR /app
 
 # Copy app code
-COPY all-models.py /app/
+COPY routheon-server.py /app/
 
 USER appuser
 
 EXPOSE 9080
 
 # run the tiny stdlib HTTP server in that script
-CMD ["python3", "all-models.py", \
+CMD ["python3", "routheon-server.py", \
      "--mappings", "/etc/traefik/mappings", \
      "--host", "0.0.0.0", \
      "--port", "9080", \
-     "--skip-mapping", "all-models.yml"]
+     "--skip-mapping", "routheon-server.yml"]

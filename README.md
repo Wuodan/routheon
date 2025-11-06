@@ -104,7 +104,7 @@ The models are stored in a Docker volume. When you are done testing, delete imag
 ```bash
 # docker clean-up
 docker compose down
-docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_all-models:demo
+docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_routheon-server:demo
 
 # backuped during test
 mv traefik/mappings/llama-server-3.yml{.bak.*,} 2>/dev/null
@@ -283,25 +283,25 @@ output as if one server was providing multiple models.
 
 #### Installation
 
-1. Copy [`traefik/mappings/all-models.yml`](traefik/mappings/all-models.yml) to `/etc/traefik/mappings/` (same path as
+1. Copy [`traefik/mappings/routheon-server.yml`](traefik/mappings/routheon-server.yml) to `/etc/traefik/mappings/` (same path as
    other mappings).  
-   In `all-models.yml`, change the URL to `http://127.0.0.1:9080`.
+   In `routheon-server.yml`, change the URL to `http://127.0.0.1:9080`.
 
    ```bash
    sudo mkdir -p /etc/traefik/mappings/
    cd /etc/traefik/mappings/
-   sudo curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/mappings/all-models.yml
-   sudo sed -i.bak 's#http://all-models:#http://127.0.0.1:#' all-models.yml
-   sudo rm -f all-models.yml.bak
+   sudo curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/mappings/routheon-server.yml
+   sudo sed -i.bak 's#http://routheon-server:#http://127.0.0.1:#' routheon-server.yml
+   sudo rm -f routheon-server.yml.bak
    ```
 
-2. Copy [`traefik/all-models/all-models.py`](traefik/all-models/all-models.py) and [
-   `traefik/all-models/requirements.txt`](traefik/all-models/requirements.txt) to `~/.routheon/`.
+2. Copy [`traefik/routheon-server/routheon-server.py`](traefik/routheon-server/routheon-server.py) and [
+   `traefik/routheon-server/requirements.txt`](traefik/routheon-server/requirements.txt) to `~/.routheon/`.
    ```bash
    mkdir -p ~/.routheon
    cd ~/.routheon
-   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/all-models/all-models.py
-   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/all-models/requirements.txt
+   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/routheon-server/routheon-server.py
+   curl -LO https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/routheon-server/requirements.txt
    ```
 
 3. Create a virtual environment and install dependencies in `~/.routheon/`:
@@ -310,23 +310,23 @@ output as if one server was providing multiple models.
    ~/.routheon/venv/bin/pip install -r ~/.routheon/requirements.txt
    ```
 
-4. Set up a system daemon depending on your OS to run `all-models.py` using the virtual environment's Python.
+4. Set up a system daemon depending on your OS to run `routheon-server.py` using the virtual environment's Python.
 
    The daemon should run this command:
    ```bash
-   ~/.routheon/venv/bin/python ~/.routheon/all-models.py
+   ~/.routheon/venv/bin/python ~/.routheon/routheon-server.py
    ```
 
 #### Customize
 
-The defaults of `all-models.py` suit the described setup.  
-If your setup is different, then adapt `all-models.py` with the following arguments:
+The defaults of `routheon-server.py` suit the described setup.  
+If your setup is different, then adapt `routheon-server.py` with the following arguments:
 
 - `--mappings`: Directory containing Traefik mapping files (default: `/etc/traefik/mappings`)
 - `--host`: Host to bind the HTTP server to. Use `127.0.0.1` (default) for remote access by Traefik only
-- `--port`: Port to listen on (default: `9080`). Ensure this matches the URL in the `all-models.yml` file
-- `--skip-mapping`: YAML filenames to skip (regex patterns, default: `["all-models.yml"]`)
-    - `all-models.yml`: The file for the summary itself must be in that list
+- `--port`: Port to listen on (default: `9080`). Ensure this matches the URL in the `routheon-server.yml` file
+- `--skip-mapping`: YAML filenames to skip (regex patterns, default: `["routheon-server.yml"]`)
+    - `routheon-server.yml`: The file for the summary itself must be in that list
     - Add patterns for other mapping files you want to exclude from the aggregation
 - `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`)
 
@@ -334,7 +334,7 @@ Example:
 
 ```bash
 ~/.routheon/venv/bin/python \
- ~/.routheon/all-models.py \
+ ~/.routheon/routheon-server.py \
    --mappings /etc/traefik/mappings \
    --host 127.0.0.1 \
    --port 9080
