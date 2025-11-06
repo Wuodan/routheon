@@ -332,6 +332,7 @@ If your setup is different, then adapt the command with the following arguments:
     - `routheon-server.yml`: The file for the summary itself must be in that list
     - Add patterns for other mapping files you want to exclude from the aggregation
 - `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`)
+- `--stats-config-file`: Path to a YAML file that hides selected `/stats` sections or fields
 - `--log-level`: Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`; default: `WARNING`)
 
 Example:
@@ -342,6 +343,30 @@ Example:
   --host 127.0.0.1 \
   --port 9080
 ```
+
+##### Limit `/stats` output
+
+If `/stats` exposes information you do not want to share, create a YAML filter file:
+
+```yaml
+# ~/.routheon/stats-filter.yml
+disabled_sections:
+  - network
+disabled_fields:
+  memory:
+    - free
+    - free_gb
+```
+
+Start the service with:
+
+```bash
+~/.routheon/venv/bin/routheon-server \
+  --mappings /etc/traefik/mappings \
+  --stats-config-file ~/.routheon/stats-filter.yml
+```
+
+Sections listed in `disabled_sections` disappear entirely, while `disabled_fields` removes keys from the remaining sections.
 
 ---
 

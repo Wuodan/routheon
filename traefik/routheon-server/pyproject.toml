@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=64"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
 
 [project]
 name = "routheon-server"
@@ -17,7 +17,5 @@ dependencies = [
 [project.scripts]
 routheon-server = "routheon_server.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["routheon_server*"]
-
+[tool.hatch.build.targets.wheel]
+packages = ["routheon_server"]

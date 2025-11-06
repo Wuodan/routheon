@@ -5,14 +5,55 @@ from __future__ import annotations
 import logging
 import platform
 import time
-from typing import Dict, List
+from dataclasses import dataclass
+from typing import Dict, List, Mapping, MutableMapping, Optional, Set
 
 import psutil
+import yaml
 
 
-def get_system_stats() -> Dict[str, object]:
-    """Collect system statistics including CPU, memory, disk usage, and system info."""
+StatsPayload = Dict[str, object]
 
+
+@dataclass(slots=True, frozen=True)
+class StatsFilter:
+    """Defines which sections and fields should be omitted from /stats."""
+
+    disabled_sections: Set[str]
+    disabled_fields: Mapping[str, Set[str]]
+
+    def apply(self, stats: StatsPayload) -> StatsPayload:
+        filtered: MutableMapping[str, object] = {
+            key: value
+            for key, value in stats.items()
+            if key not in self.disabled_sections
+        }
+
+        for section, fields in self.disabled_fields.items():
+            section_payload = filtered.get(section)
+            if isinstance(section_payload, dict):
+                filtered[section] = {
+                    key: value
+                    for key, value in section_payload.items()
+                    if key not in fields
+                }
+        return dict(filtered)
+
+
+@dataclass(slots=True)
+class StatsCollector:
+    """Collects system stats and applies an optional filter."""
+
+    stats_filter: Optional[StatsFilter] = None
+
+    def collect(self) -> StatsPayload:
+        stats = _collect_raw_stats()
+        if self.stats_filter:
+            return self.stats_filter.apply(stats)
+        return stats
+
+
+def _collect_raw_stats() -> StatsPayload:
     try:
         boot_time = psutil.boot_time()
         uptime: float = time.time() - boot_time
@@ -108,3 +149,44 @@ def get_system_stats() -> Dict[str, object]:
             "error": f"Failed to collect system stats: {exc}",
         }
 
+
+def load_stats_filter(path: str) -> Optional[StatsFilter]:
+    """Load stats filter configuration from YAML."""
+
+    try:
+        with open(path, encoding="utf-8") as file:
+            raw_config = yaml.safe_load(file) or {}
+    except FileNotFoundError:
+        logging.warning("Stats config file not found: %s", path)
+        return None
+    except yaml.YAMLError as exc:
+        logging.error("Failed to parse stats config file %s: %s", path, exc)
+        return None
+    except OSError as exc:
+        logging.error("Error reading stats config file %s: %s", path, exc)
+        return None
+
+    disabled_sections = raw_config.get("disabled_sections", [])
+    disabled_fields = raw_config.get("disabled_fields", {})
+
+    if not isinstance(disabled_sections, list):
+        logging.error("disabled_sections must be a list in %s", path)
+        return None
+    if not isinstance(disabled_fields, dict):
+        logging.error("disabled_fields must be a mapping in %s", path)
+        return None
+
+    section_set: Set[str] = {str(item) for item in disabled_sections}
+    field_map: Dict[str, Set[str]] = {}
+    for section, fields in disabled_fields.items():
+        if not isinstance(fields, list):
+            logging.error(
+                "disabled_fields.%s must be a list in %s", section, path
+            )
+            continue
+        field_map[str(section)] = {str(field) for field in fields}
+
+    if not section_set and not field_map:
+        return None
+
+    return StatsFilter(disabled_sections=section_set, disabled_fields=field_map)

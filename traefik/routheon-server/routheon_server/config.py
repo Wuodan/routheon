@@ -17,6 +17,7 @@ class ServerConfig:
     skip_mapping: List[str]
     mapping_timeout: int
     log_level: str
+    stats_config_file: Optional[str]
 
 
 def parse_args(argv: Optional[List[str]] = None) -> ServerConfig:
@@ -58,6 +59,11 @@ def parse_args(argv: Optional[List[str]] = None) -> ServerConfig:
         default="WARNING",
         help="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
+    parser.add_argument(
+        "--stats-config-file",
+        default=None,
+        help="Path to YAML file controlling which /stats fields to expose",
+    )
     args = parser.parse_args(argv)
     skip_mapping: List[str] = list(args.skip_mapping or [])
 
@@ -68,5 +74,5 @@ def parse_args(argv: Optional[List[str]] = None) -> ServerConfig:
         skip_mapping=skip_mapping,
         mapping_timeout=args.mapping_timeout,
         log_level=args.log_level,
+        stats_config_file=args.stats_config_file,
     )
-

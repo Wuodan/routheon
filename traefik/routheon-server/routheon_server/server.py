@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import logging
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Dict, Type, ClassVar
+from typing import ClassVar, Dict, Type
 
-from .config import ServerConfig
 from .aggregator import ModelAggregator
+from .config import ServerConfig
 from .models import ModelsResponse
-from .stats import get_system_stats
+from .stats import StatsCollector, load_stats_filter
 
 JsonDict = Dict[str, object]
 
@@ -24,6 +24,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     server_config: ClassVar[ServerConfig]
     model_aggregator: ClassVar[ModelAggregator]
+    stats_collector: ClassVar[StatsCollector]
 
     def _write_json(self, payload: JsonDict, status_code: int = 200) -> None:
         body = _json_bytes(payload)
@@ -38,7 +39,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             payload: ModelsResponse = self.model_aggregator.get_models()
             self._write_json(payload)
         elif self.path == "/stats":
-            payload = get_system_stats()
+            payload = self.stats_collector.collect()
             self._write_json(payload)
         else:
             self.send_response(404)
@@ -60,6 +61,12 @@ def run_server(config: ServerConfig) -> None:
         skip_patterns=config.skip_mapping,
         mapping_timeout=config.mapping_timeout,
     )
+    stats_filter = (
+        load_stats_filter(config.stats_config_file)
+        if config.stats_config_file
+        else None
+    )
+    handler_class.stats_collector = StatsCollector(stats_filter=stats_filter)
 
     httpd: HTTPServer = HTTPServer((config.host, config.port), handler_class)
     logging.info("Starting routheon-server on %s:%s", config.host, config.port)
