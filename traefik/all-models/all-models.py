@@ -11,13 +11,16 @@ import argparse
 import json
 import logging
 import os
+import platform
 import re
+import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import List, Dict, Any, Optional
 
+import psutil
 import yaml
 
 
@@ -82,6 +85,107 @@ def normalize_model_id(m: Any) -> Optional[str]:
     if m.get("name"):
         return m["name"]
     return None
+
+
+def get_system_stats() -> Dict[str, Any]:
+    """
+    Collect system statistics including CPU, memory, disk usage, and system info.
+    Returns a dictionary with all the metrics.
+    """
+    try:
+        # System information
+        boot_time = psutil.boot_time()
+        uptime = time.time() - boot_time
+        
+        # CPU information
+        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_count = psutil.cpu_count()
+        load_avg = psutil.getloadavg() if hasattr(psutil, 'getloadavg') else [0, 0, 0]
+        
+        # Memory information
+        memory = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        
+        # Disk information (root partition)
+        disk = psutil.disk_usage('/')
+        
+        # Network information
+        net_io = psutil.net_io_counters()
+        
+        # Process count
+        process_count = len(psutil.pids())
+        
+        return {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "system": {
+                "platform": platform.system(),
+                "platform_release": platform.release(),
+                "platform_version": platform.version(),
+                "hostname": platform.node(),
+                "architecture": platform.machine(),
+                "processor": platform.processor(),
+                "uptime_seconds": int(uptime),
+                "uptime_human": f"{int(uptime // 86400)}d {int((uptime % 86400) // 3600)}h {int((uptime % 3600) // 60)}m"
+            },
+            "cpu": {
+                "usage_percent": round(cpu_percent, 2),
+                "load_average": {
+                    "1min": round(load_avg[0], 2),
+                    "5min": round(load_avg[1], 2),
+                    "15min": round(load_avg[2], 2)
+                },
+                "core_count": cpu_count,
+                "core_count_logical": psutil.cpu_count(logical=True)
+            },
+            "memory": {
+                "total": memory.total,
+                "available": memory.available,
+                "used": memory.used,
+                "free": memory.free,
+                "percent": round(memory.percent, 2),
+                "total_gb": round(memory.total / (1024**3), 2),
+                "available_gb": round(memory.available / (1024**3), 2),
+                "used_gb": round(memory.used / (1024**3), 2),
+                "free_gb": round(memory.free / (1024**3), 2)
+            },
+            "swap": {
+                "total": swap.total,
+                "used": swap.used,
+                "free": swap.free,
+                "percent": round(swap.percent, 2),
+                "total_gb": round(swap.total / (1024**3), 2),
+                "used_gb": round(swap.used / (1024**3), 2),
+                "free_gb": round(swap.free / (1024**3), 2)
+            },
+            "disk": {
+                "total": disk.total,
+                "used": disk.used,
+                "free": disk.free,
+                "percent": round(disk.percent, 2),
+                "total_gb": round(disk.total / (1024**3), 2),
+                "used_gb": round(disk.used / (1024**3), 2),
+                "free_gb": round(disk.free / (1024**3), 2)
+            },
+            "network": {
+                "bytes_sent": net_io.bytes_sent,
+                "bytes_recv": net_io.bytes_recv,
+                "packets_sent": net_io.packets_sent,
+                "packets_recv": net_io.packets_recv,
+                "errin": net_io.errin,
+                "errout": net_io.errout,
+                "dropin": net_io.dropin,
+                "dropout": net_io.dropout
+            },
+            "processes": {
+                "count": process_count
+            }
+        }
+    except Exception as e:
+        logging.error(f"Error collecting system stats: {e}")
+        return {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "error": f"Failed to collect system stats: {str(e)}"
+        }
 
 
 def aggregate_all(urls: set[str], mapping_timeout: int) -> Dict[str, Any]:
@@ -160,21 +264,29 @@ class OneShotHandler(BaseHTTPRequestHandler):
         }
 
     def do_GET(self):
-        if self.path != "/v1/models":
+        if self.path == "/v1/models":
+            urls = self.get_urls()
+            result = aggregate_all(urls, self.mapping_timeout)
+            body = json.dumps(result).encode("utf-8")
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        elif self.path == "/stats":
+            result = get_system_stats()
+            body = json.dumps(result, indent=2).encode("utf-8")
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
             self.send_response(404)
             self.end_headers()
             return
-
-        urls = self.get_urls()
-
-        result = aggregate_all(urls, self.mapping_timeout)
-        body = json.dumps(result).encode("utf-8")
-
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
 
 
 def main() -> None:

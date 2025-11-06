@@ -5,6 +5,12 @@ http:
       service: all-models
       entryPoints:
         - llama-servers
+    
+    all-models-stats:
+      rule: "Path(`/stats`)"
+      service: all-models
+      entryPoints:
+        - llama-servers
 
   services:
     all-models:
