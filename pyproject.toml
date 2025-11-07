@@ -7,12 +7,17 @@ name = "routheon-server"
 description = "Expose OpenAI-compatible /v1/models aggregation plus /stats host metrics behind Traefik."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "Apache-2.0"}
+license = { text = "Apache-2.0" }
 dependencies = [
     "psutil",
     "pyyaml",
 ]
 dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/Wuodan/routheon"
+Repository = "https://github.com/Wuodan/routheon"
+Issues = "https://github.com/Wuodan/routheon/issues"
 
 [project.scripts]
 routheon-server = "routheon_server.cli:main"
