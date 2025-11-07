@@ -342,9 +342,6 @@ If your setup is different, then adapt the command with the following arguments:
 - `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`)
 - `--stats-config-file`: Path to a YAML file that hides selected `/stats` sections or fields
 - `--log-level`: Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`; default: `WARNING`)
-- `ROUTHEON_VERSION` build arg: when building the Docker image (e.g., via `docker compose build`), override this arg to
-  stamp the desired package version (`docker compose build --build-arg ROUTHEON_VERSION=0.4.0 routheon-server`). The demo
-  stack falls back to `0.0.0.dev0`, which is a valid development version for local use.
 
 Example:
 
