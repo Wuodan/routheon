@@ -241,7 +241,9 @@ Change your system daemon for `llama-server` to also call [create-mapping.sh](tr
 Download script:
 
 ```bash
-sudo curl -LO --output-dir /usr/local/bin https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/create-mapping/create-mapping.sh
+sudo curl -LO \
+  --output-dir /usr/local/bin \
+  https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/create-mapping/create-mapping.sh
 sudo chmod +x /usr/local/bin/create-mapping.sh
 ```
 
@@ -251,8 +253,8 @@ Example: Chain create-mapping.sh and llama-server:
 /usr/local/bin/create-mapping.sh \
   --port 8011 \
   --service TinyLlama_Chat \
-  --api_key 'my-api-key' && \
-\
+  --api_key 'my-api-key'
+
 exec \
   llama-server \
       --hf-repo TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF:Q2_K \
@@ -313,6 +315,7 @@ compatible response as if one server was providing multiple models.
 
 2. Install routheon-server into a virtual environment (either from PyPI or from the cloned repo):
    ```bash
+   mkdir -p ~/.routheon
    python3 -m venv ~/.routheon/venv
    ~/.routheon/venv/bin/pip install routheon-server
    ```
@@ -366,18 +369,12 @@ curl http://127.0.0.1:9080/stats | jq
 
 ###### Limit `/stats` output
 
-If `/stats` exposes information you do not want to share, create a YAML configuration file:
+If `/stats` exposes information you do not want to share, add a [YAML configuration file](stats-config.yml):
 
-```yaml
-# ~/.routheon/stats-config.yml
-enabled_sections:
-  - system
-  - cpu
-  - memory
-enabled_fields:
-  memory:
-    - available
-    - percent
+```bash
+curl -LO \
+  --output-dir ~/.routheon \
+  https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/stats-config.yml
 ```
 
 Start the service with:
