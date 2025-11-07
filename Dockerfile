@@ -5,6 +5,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 # Install application and create user
+ARG ROUTHEON_VERSION=0.0.0
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${ROUTHEON_VERSION}
 COPY pyproject.toml README.md /tmp/routheon-server/
 COPY routheon_server /tmp/routheon-server/routheon_server
 RUN pip install --no-cache-dir /tmp/routheon-server && \

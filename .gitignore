@@ -11,5 +11,6 @@ dist/
 # may contain API-keys
 .roo/mcp.json
 
-# auto generated during tests
+# auto generated during demo
 /traefik/mappings/llama-server-2.yml
+/routheon_server/_version.py
