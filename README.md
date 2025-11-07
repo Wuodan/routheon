@@ -378,7 +378,6 @@ Start the service with:
 
 ```bash
 ~/.routheon/venv/bin/routheon-server \
-  --mappings /etc/traefik/mappings \
   --stats-config-file ~/.routheon/stats-config.yml
 ```
 
