@@ -98,29 +98,6 @@ To check status, run:
 docker compose ps
 ```
 
-#### Clean-up after the Demo
-
-The models are stored in a Docker volume. When you are done with the demo, delete images and the volume with:
-
-```bash
-# docker clean-up
-docker compose down
-docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_routheon-server:demo
-
-# backuped during demo
-mv traefik/mappings/llama-server-3.yml{.bak.*,} 2>/dev/null
-
-# created during demo
-[ -f traefik/mappings/llama-server-2.yml ] && \
-  sudo rm traefik/mappings/llama-server-2.yml
-```
-
-Remove the volume with the models:
-
-```bash
-docker volume rm routheon_llama_cpp
-```
-
 ### Demo Requests
 
 Use the following `curl` commands to exercise the setup with `API_KEY-1` and `API_KEY-2`.
@@ -192,11 +169,37 @@ docker compose start llama-server-2
 routheon-server also serves `/stats`, which returns CPU, memory, disk, network, and uptime information for the host
 running the aggregator.
 
+This is configured to see only a subset of the available information.  
+See [Configure `/stats` output](#configure-stats-output) below.
+
 ```bash
 curl http://127.0.0.1:8080/stats | jq
 ```
 
 Use it to monitor resource pressure before launching additional llama.cpp servers.
+
+### Clean-up after the Demo
+
+The models are stored in a Docker volume. When you are done with the demo, delete images and the volume with:
+
+```bash
+# docker clean-up
+docker compose down
+docker image rm traefik:latest ghcr.io/ggml-org/llama.cpp:server python:slim routheon_routheon-server:demo
+
+# archived during demo as it contains API_KEY-2
+mv traefik/mappings/llama-server-3.yml{.bak.*,} 2>/dev/null
+
+# created during demo
+[ -f traefik/mappings/llama-server-2.yml ] && \
+  sudo rm traefik/mappings/llama-server-2.yml
+```
+
+Remove the volume with the models:
+
+```bash
+docker volume rm routheon_llama_cpp
+```
 
 ---
 
@@ -239,12 +242,13 @@ Download script:
 
 ```bash
 sudo curl -LO --output-dir /usr/local/bin https://raw.githubusercontent.com/Wuodan/routheon/refs/heads/main/traefik/create-mapping/create-mapping.sh
+sudo chmod +x /usr/local/bin/create-mapping.sh
 ```
 
 Example: Chain create-mapping.sh and llama-server:
 
 ```bash
-.usr/local/bin/create-mapping.sh \
+/usr/local/bin/create-mapping.sh \
   --port 8011 \
   --service TinyLlama_Chat \
   --api_key 'my-api-key' && \
@@ -335,6 +339,9 @@ If your setup is different, then adapt the command with the following arguments:
 - `--mapping-timeout`: Timeout in seconds for requests to each mapping (default: `2`)
 - `--stats-config-file`: Path to a YAML file that hides selected `/stats` sections or fields
 - `--log-level`: Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`; default: `WARNING`)
+- `ROUTHEON_VERSION` build arg: when building the Docker image (e.g., via `docker compose build`), override this arg to
+  stamp the desired package version (`docker compose build --build-arg ROUTHEON_VERSION=0.4.0 routheon-server`). The demo
+  stack falls back to `0.0.0.dev0`, which is a valid development version for local use.
 
 Example:
 
@@ -345,7 +352,19 @@ Example:
   --port 9080
 ```
 
-##### Limit `/stats` output
+##### Configure `/stats` output
+
+To see the full output of `/stats` run:
+
+```bash
+~/.routheon/venv/bin/routheon-server
+```
+and read the output in a second terminal with
+```bash
+curl http://127.0.0.1:9080/stats | jq
+```
+
+###### Limit `/stats` output
 
 If `/stats` exposes information you do not want to share, create a YAML configuration file:
 
