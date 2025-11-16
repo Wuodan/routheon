@@ -57,6 +57,17 @@ if [ ! -d "$MAPPINGS" ]; then
     exit 1
 fi
 
+if command -v flock >/dev/null 2>&1; then
+    # Serialize operations per API_KEY to avoid concurrent rotations/writes
+    LOCK_DIR="/tmp/routheon"
+    mkdir -p "$LOCK_DIR"
+    LOCK_FILE="${LOCK_DIR}/$(basename "$0").${API_KEY}.lock"
+
+    # Acquire exclusive lock (released automatically when the script exits)
+    exec 9>"$LOCK_FILE"
+    flock -x 9
+fi
+
 # Rotate old mappings that use the same API key
 # - only .yml / .yaml
 # - skip the file we're about to create (${SERVICE}.yml)
