@@ -1,7 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "forkProcessing": "enabled",
-  "enabledManagers": ["docker-compose", "dockerfile", "github-actions", "pep621", "pip_requirements"],
+  "separateMajorMinor": false,
+  "enabledManagers": [
+    "docker-compose",
+    "dockerfile",
+    "github-actions",
+    "pep621",
+    "pip_requirements"
+  ],
   "labels": ["dependencies"],
   "packageRules": [
     {
